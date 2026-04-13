@@ -107,6 +107,23 @@ export function generatePDF(measurements: Measurement[], userName: string = 'Pac
   doc.save(`relatorio_pressao_${format(new Date(), "yyyyMMdd")}.pdf`);
 }
 
+export function viewPDF(measurements: Measurement[], userName: string = 'Paciente') {
+  const doc = generatePDFDocument(measurements, userName);
+  const dataUri = doc.output('datauristring');
+  
+  try {
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<iframe src="${dataUri}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+    } else {
+      // Fallback for WebViews (like Kodular) that block popups
+      window.location.href = dataUri;
+    }
+  } catch (error) {
+    window.location.href = dataUri;
+  }
+}
+
 export async function sharePDF(measurements: Measurement[], userName: string = 'Paciente') {
   const doc = generatePDFDocument(measurements, userName);
   const filename = `relatorio_pressao_${format(new Date(), "yyyyMMdd")}.pdf`;

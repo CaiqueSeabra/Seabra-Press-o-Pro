@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { MeasurementForm } from './components/MeasurementForm';
 import { HistoryList } from './components/HistoryList';
 import { DashboardChart } from './components/DashboardChart';
-import { generatePDF, sharePDF } from './lib/pdfGenerator';
+import { viewPDF, sharePDF } from './lib/pdfGenerator';
 import { Measurement, Period } from './types';
 import { db } from './firebase';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
@@ -121,12 +121,12 @@ function Dashboard() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleViewPDF = () => {
     try {
-      generatePDF(measurements, user?.displayName || 'Paciente');
+      viewPDF(measurements, user?.displayName || 'Paciente');
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Erro ao gerar PDF. Por favor, tente novamente.");
+      console.error("Error viewing PDF:", error);
+      alert("Erro ao abrir PDF. Por favor, tente novamente.");
     }
   };
 
@@ -162,11 +162,11 @@ function Dashboard() {
             {measurements.length > 0 && (
               <>
                 <button 
-                  onClick={handleDownloadPDF}
+                  onClick={handleViewPDF}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors text-sm font-medium"
                 >
                   <FileDown className="w-4 h-4" />
-                  <span className="hidden sm:inline">Baixar PDF</span>
+                  <span className="hidden sm:inline">Ver PDF</span>
                 </button>
                 <button 
                   onClick={handleSharePDF}
