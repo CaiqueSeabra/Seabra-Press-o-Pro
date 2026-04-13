@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Component, ErrorInfo, ReactNode } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MeasurementForm } from './components/MeasurementForm';
 import { HistoryList } from './components/HistoryList';
@@ -11,6 +11,40 @@ import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2 } from 
 import { isToday } from 'date-fns';
 import { analyzeRisk } from './lib/bloodPressure';
 import { cn } from './lib/utils';
+
+class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 text-center">
+          <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Algo deu errado</h1>
+          <p className="text-zinc-400 mb-4">{this.state.error?.message || "Erro desconhecido"}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 px-6 py-2 rounded-lg font-bold"
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -238,7 +272,38 @@ function Dashboard() {
 }
 
 function LoginScreen() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      if (isRegistering) {
+        await signUpWithEmail(email, password);
+      } else {
+        await signInWithEmail(email, password);
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Email ou senha incorretos.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('Este email já está cadastrado.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('A senha deve ter pelo menos 6 caracteres.');
+      } else {
+        setError('Ocorreu um erro ao fazer login.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
@@ -250,12 +315,61 @@ function LoginScreen() {
         <p className="text-zinc-400 mb-8">
           Controle Inteligente da Pressão Arterial
         </p>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg mb-6 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+          <input
+            type="email"
+            placeholder="Seu email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Sua senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+            required
+            minLength={6}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white hover:bg-blue-500 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+          >
+            {loading ? 'Aguarde...' : (isRegistering ? 'Criar Conta' : 'Entrar')}
+          </button>
+        </form>
+
+        <button
+          onClick={() => {
+            setIsRegistering(!isRegistering);
+            setError('');
+          }}
+          className="text-zinc-400 text-sm hover:text-white transition-colors mb-6"
+        >
+          {isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem conta? Cadastre-se'}
+        </button>
+
+        <div className="relative flex items-center py-2 mb-6">
+          <div className="flex-grow border-t border-zinc-800"></div>
+          <span className="flex-shrink-0 mx-4 text-zinc-500 text-sm">ou</span>
+          <div className="flex-grow border-t border-zinc-800"></div>
+        </div>
         
         <button
           onClick={signInWithGoogle}
-          className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-4 px-6 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3 text-lg"
+          className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-3 px-6 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3"
         >
-          <svg className="w-6 h-6" viewBox="0 0 24 24">
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -284,8 +398,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
