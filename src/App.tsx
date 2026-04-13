@@ -292,15 +292,19 @@ function LoginScreen() {
         await signInWithEmail(email, password);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Auth Error:", err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setError('Email ou senha incorretos.');
       } else if (err.code === 'auth/email-already-in-use') {
         setError('Este email já está cadastrado.');
       } else if (err.code === 'auth/weak-password') {
         setError('A senha deve ter pelo menos 6 caracteres.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('O formato do email é inválido.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('Login por email e senha não está habilitado no Firebase.');
       } else {
-        setError('Ocorreu um erro ao fazer login.');
+        setError(`Erro: ${err.message || 'Ocorreu um erro ao fazer login.'}`);
       }
     } finally {
       setLoading(false);
@@ -317,10 +321,14 @@ function LoginScreen() {
       setError('');
       setResetMessage('');
       await resetPassword(email);
-      setResetMessage('Email de redefinição enviado! Verifique sua caixa de entrada.');
+      setResetMessage('Email de redefinição enviado! Verifique sua caixa de entrada (e a pasta de Spam).');
     } catch (err: any) {
       console.error(err);
-      setError('Erro ao enviar email de redefinição. Verifique se o email está correto.');
+      if (err.code === 'auth/user-not-found') {
+        setError('Este email não está cadastrado. Por favor, crie uma conta.');
+      } else {
+        setError('Erro ao enviar email. Verifique se o email está correto.');
+      }
     } finally {
       setLoading(false);
     }
