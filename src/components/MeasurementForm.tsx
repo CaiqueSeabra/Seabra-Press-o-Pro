@@ -63,6 +63,7 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
           <input 
             type="file" 
             accept="image/*" 
+            capture="environment"
             className="hidden" 
             ref={fileInputRef}
             onChange={handleImageUpload}
