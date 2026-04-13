@@ -1,0 +1,291 @@
+import React, { useEffect, useState } from 'react';
+import { AuthProvider, useAuth } from './AuthContext';
+import { MeasurementForm } from './components/MeasurementForm';
+import { HistoryList } from './components/HistoryList';
+import { DashboardChart } from './components/DashboardChart';
+import { generatePDF, sharePDF } from './lib/pdfGenerator';
+import { Measurement, Period } from './types';
+import { db } from './firebase';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2 } from 'lucide-react';
+import { isToday } from 'date-fns';
+import { analyzeRisk } from './lib/bloodPressure';
+import { cn } from './lib/utils';
+
+function Dashboard() {
+  const { user, logout } = useAuth();
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, 'users', user.uid, 'measurements'),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Measurement[] = [];
+      snapshot.forEach((doc) => {
+        const docData = doc.data();
+        if (docData.timestamp) {
+          data.push({
+            id: doc.id,
+            userId: docData.userId,
+            period: docData.period,
+            systolic: docData.systolic,
+            diastolic: docData.diastolic,
+            pulse: docData.pulse,
+            timestamp: (docData.timestamp as Timestamp).toDate(),
+          });
+        }
+      });
+      setMeasurements(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching measurements:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleAddMeasurement = async (data: { period: Period; systolic: number; diastolic: number; pulse?: number }) => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'measurements'), {
+        userId: user.uid,
+        ...data,
+        timestamp: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error adding measurement:", error);
+      alert("Erro ao salvar medição. Verifique sua conexão.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteMeasurement = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'measurements', id));
+    } catch (error) {
+      console.error("Error deleting measurement:", error);
+    }
+  };
+
+  const handleSharePDF = () => {
+    sharePDF(measurements, user?.displayName || 'Paciente');
+  };
+
+  const handleDownloadPDF = () => {
+    generatePDF(measurements, user?.displayName || 'Paciente');
+  };
+
+  const riskAlert = analyzeRisk(measurements);
+
+  const todaysMeasurements = measurements.filter(m => isToday(m.timestamp));
+  const hasToday = todaysMeasurements.length > 0;
+  const avgSysToday = hasToday ? Math.round(todaysMeasurements.reduce((acc, m) => acc + m.systolic, 0) / todaysMeasurements.length) : 0;
+  const avgDiaToday = hasToday ? Math.round(todaysMeasurements.reduce((acc, m) => acc + m.diastolic, 0) / todaysMeasurements.length) : 0;
+  
+  const hasMeasurements = measurements.length > 0;
+  const avgSysTotal = hasMeasurements ? Math.round(measurements.reduce((acc, m) => acc + m.systolic, 0) / measurements.length) : 0;
+  const avgDiaTotal = hasMeasurements ? Math.round(measurements.reduce((acc, m) => acc + m.diastolic, 0) / measurements.length) : 0;
+  
+  const latestMeasurement = hasMeasurements ? measurements[0] : null;
+
+  return (
+    <div className="min-h-screen bg-black text-zinc-100 pb-24">
+      {/* Header */}
+      <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Activity className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="font-bold text-xl tracking-tight text-white">Seabra Pressão Pro</h1>
+              <p className="text-xs text-zinc-400">Controle Inteligente da Pressão Arterial</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {measurements.length > 0 && (
+              <>
+                <button 
+                  onClick={handleDownloadPDF}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors text-sm font-medium"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span className="hidden sm:inline">Baixar PDF</span>
+                </button>
+                <button 
+                  onClick={handleSharePDF}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors text-sm font-medium shadow-lg shadow-blue-500/20"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Compartilhar</span>
+                </button>
+              </>
+            )}
+            <button 
+              onClick={logout}
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              title="Sair"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {riskAlert && (
+          <div className={cn(
+            "rounded-2xl p-4 flex items-start gap-3 border transition-all",
+            riskAlert.level === 'critical' && "bg-red-500/20 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse",
+            riskAlert.level === 'danger' && "bg-orange-500/10 border-orange-500/30",
+            riskAlert.level === 'warning' && "bg-yellow-500/10 border-yellow-500/30"
+          )}>
+            {riskAlert.level === 'critical' ? (
+              <AlertOctagon className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
+            ) : riskAlert.level === 'danger' ? (
+              <AlertTriangle className="w-6 h-6 text-orange-400 shrink-0 mt-0.5" />
+            ) : (
+              <AlertTriangle className="w-6 h-6 text-yellow-400 shrink-0 mt-0.5" />
+            )}
+            <div>
+              <h3 className={cn(
+                "font-semibold",
+                riskAlert.level === 'critical' && "text-red-500",
+                riskAlert.level === 'danger' && "text-orange-400",
+                riskAlert.level === 'warning' && "text-yellow-400"
+              )}>{riskAlert.title}</h3>
+              <p className={cn(
+                "text-sm mt-1",
+                riskAlert.level === 'critical' && "text-red-400",
+                riskAlert.level === 'danger' && "text-orange-400/80",
+                riskAlert.level === 'warning' && "text-yellow-400/80"
+              )}>
+                {riskAlert.message}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {hasMeasurements && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 shadow-lg">
+              <h3 className="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">Última Medição</h3>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-zinc-100">{latestMeasurement?.systolic}</span>
+                <span className="text-sm text-zinc-500 font-light">/</span>
+                <span className="text-xl font-bold text-zinc-100">{latestMeasurement?.diastolic}</span>
+              </div>
+            </div>
+            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 shadow-lg">
+              <h3 className="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">Média Diária</h3>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-zinc-100">{avgSysToday || '--'}</span>
+                <span className="text-sm text-zinc-500 font-light">/</span>
+                <span className="text-xl font-bold text-zinc-100">{avgDiaToday || '--'}</span>
+              </div>
+            </div>
+            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 shadow-lg">
+              <h3 className="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">Média Geral</h3>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-bold text-zinc-100">{avgSysTotal}</span>
+                <span className="text-sm text-zinc-500 font-light">/</span>
+                <span className="text-xl font-bold text-zinc-100">{avgDiaTotal}</span>
+              </div>
+            </div>
+            <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 shadow-lg">
+              <h3 className="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-1">Status Atual</h3>
+              <div className="flex items-baseline gap-1">
+                <span className={cn(
+                  "text-sm font-bold",
+                  riskAlert?.level === 'critical' ? 'text-red-500' :
+                  riskAlert?.level === 'danger' ? 'text-orange-500' :
+                  riskAlert?.level === 'warning' ? 'text-yellow-500' : 'text-green-500'
+                )}>
+                  {riskAlert ? riskAlert.title : 'Normal'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <MeasurementForm onSubmit={handleAddMeasurement} loading={saving} />
+        
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            <DashboardChart measurements={measurements} />
+            <HistoryList measurements={measurements} onDelete={handleDeleteMeasurement} />
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function LoginScreen() {
+  const { signInWithGoogle } = useAuth();
+  
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-zinc-900 rounded-3xl p-8 border border-zinc-800 text-center shadow-2xl">
+        <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
+          <Activity className="w-10 h-10 text-blue-400" />
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Seabra Pressão Pro</h1>
+        <p className="text-zinc-400 mb-8">
+          Controle Inteligente da Pressão Arterial
+        </p>
+        
+        <button
+          onClick={signInWithGoogle}
+          className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-4 px-6 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-3 text-lg"
+        >
+          <svg className="w-6 h-6" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Entrar com Google
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return user ? <Dashboard /> : <LoginScreen />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
