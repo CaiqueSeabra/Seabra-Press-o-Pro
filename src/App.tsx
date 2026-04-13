@@ -7,7 +7,7 @@ import { generatePDF, sharePDF } from './lib/pdfGenerator';
 import { Measurement, Period } from './types';
 import { db } from './firebase';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2 } from 'lucide-react';
+import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff } from 'lucide-react';
 import { isToday } from 'date-fns';
 import { analyzeRisk } from './lib/bloodPressure';
 import { cn } from './lib/utils';
@@ -279,6 +279,7 @@ function LoginScreen() {
   const [error, setError] = useState('');
   const [resetMessage, setResetMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,17 +366,28 @@ function LoginScreen() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
             required
+            autoComplete="email"
           />
           <div className="space-y-2">
-            <input
-              type="password"
-              placeholder="Sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
-              required
-              minLength={6}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                required
+                minLength={6}
+                autoComplete={isRegistering ? "new-password" : "current-password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors p-1"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             {!isRegistering && (
               <div className="flex justify-end">
                 <button
