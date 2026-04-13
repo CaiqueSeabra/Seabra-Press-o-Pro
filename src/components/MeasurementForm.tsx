@@ -16,7 +16,8 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
   const [pulse, setPulse] = useState<string>('');
   const [isScanning, setIsScanning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,7 +34,8 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
       setErrorMsg("Não foi possível extrair os dados da imagem. Tente novamente ou preencha manualmente.");
     } finally {
       setIsScanning(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      if (galleryInputRef.current) galleryInputRef.current.value = '';
     }
   };
 
@@ -56,30 +58,45 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-900 rounded-2xl p-4 sm:p-6 shadow-xl border border-zinc-800">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h2 className="text-xl font-semibold text-zinc-100">Nova Medição</h2>
         
-        <div>
+        <div className="flex gap-2">
           <input 
             type="file" 
             accept="image/*" 
             capture="environment"
             className="hidden" 
-            ref={fileInputRef}
+            ref={cameraInputRef}
+            onChange={handleImageUpload}
+          />
+          <input 
+            type="file" 
+            accept="image/*" 
+            className="hidden" 
+            ref={galleryInputRef}
             onChange={handleImageUpload}
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={isScanning || loading}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             {isScanning ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
             ) : (
               <ImagePlus className="w-4 h-4" />
             )}
-            {isScanning ? 'Analisando...' : 'Câmera / Galeria'}
+            {isScanning ? 'Analisando...' : 'Câmera'}
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={isScanning || loading}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Galeria
           </button>
         </div>
       </div>
