@@ -272,16 +272,18 @@ function Dashboard() {
 }
 
 function LoginScreen() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setResetMessage('');
     setLoading(true);
     try {
       if (isRegistering) {
@@ -304,6 +306,25 @@ function LoginScreen() {
       setLoading(false);
     }
   };
+
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Digite seu email no campo acima para redefinir a senha.');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      setResetMessage('');
+      await resetPassword(email);
+      setResetMessage('Email de redefinição enviado! Verifique sua caixa de entrada.');
+    } catch (err: any) {
+      console.error(err);
+      setError('Erro ao enviar email de redefinição. Verifique se o email está correto.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
@@ -322,6 +343,12 @@ function LoginScreen() {
           </div>
         )}
 
+        {resetMessage && (
+          <div className="bg-green-500/10 border border-green-500/50 text-green-500 p-3 rounded-lg mb-6 text-sm">
+            {resetMessage}
+          </div>
+        )}
+
         <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
           <input
             type="email"
@@ -331,15 +358,29 @@ function LoginScreen() {
             className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
             required
           />
-          <input
-            type="password"
-            placeholder="Sua senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
-            required
-            minLength={6}
-          />
+          <div className="space-y-2">
+            <input
+              type="password"
+              placeholder="Sua senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+              required
+              minLength={6}
+            />
+            {!isRegistering && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={loading}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Esqueceu a senha?
+                </button>
+              </div>
+            )}
+          </div>
           <button
             type="submit"
             disabled={loading}
@@ -353,6 +394,7 @@ function LoginScreen() {
           onClick={() => {
             setIsRegistering(!isRegistering);
             setError('');
+            setResetMessage('');
           }}
           className="text-zinc-400 text-sm hover:text-white transition-colors mb-6"
         >
