@@ -5,10 +5,11 @@ import { HistoryList } from './components/HistoryList';
 import { DashboardChart } from './components/DashboardChart';
 import { InstallPWA } from './components/InstallPWA';
 import { ReportModal } from './components/ReportModal';
+import { LandingPage } from './components/LandingPage';
 import { Measurement, Period } from './types';
 import { db, auth } from './firebase';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff, Plus, History, TrendingUp, Info } from 'lucide-react';
+import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff, Plus, History, TrendingUp, Info, ArrowLeft } from 'lucide-react';
 
 enum OperationType {
   CREATE = 'create',
@@ -490,7 +491,7 @@ function Dashboard() {
   );
 }
 
-function LoginScreen() {
+function LoginScreen({ onBack }: { onBack: () => void }) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -593,6 +594,13 @@ function LoginScreen() {
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md space-y-12 z-10"
       >
+        <button 
+          onClick={() => { vibrate(5); onBack(); }}
+          className="absolute top-8 left-8 p-3 rounded-2xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+
         <div className="text-center space-y-8">
           <div className="relative inline-block">
             {/* Background Glow */}
@@ -764,6 +772,7 @@ function LoginScreen() {
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
 
   if (loading) {
     return (
@@ -773,9 +782,22 @@ function AppContent() {
     );
   }
 
+  if (user) {
+    return (
+      <>
+        <Dashboard />
+        <InstallPWA />
+      </>
+    );
+  }
+
   return (
     <>
-      {user ? <Dashboard /> : <LoginScreen />}
+      {showLogin ? (
+        <LoginScreen onBack={() => setShowLogin(false)} />
+      ) : (
+        <LandingPage onGetStarted={() => setShowLogin(true)} />
+      )}
       <InstallPWA />
     </>
   );
