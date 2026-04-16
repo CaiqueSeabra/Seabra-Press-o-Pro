@@ -193,12 +193,9 @@ function Dashboard() {
           <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg overflow-hidden">
             <img 
-              src="icon.png" 
+              src="/icon.png" 
               alt="Logo" 
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/heart/200/200';
-              }}
             />
           </div>
             <div>
@@ -461,12 +458,9 @@ function LoginScreen() {
         <div className="text-center space-y-6">
           <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(59,130,246,0.1)] rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden">
             <img 
-              src="icon.png" 
+              src="/icon.png" 
               alt="Seabra Pressão Pro Logo" 
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/heart/200/200';
-              }}
             />
           </div>
           <div className="space-y-2">
