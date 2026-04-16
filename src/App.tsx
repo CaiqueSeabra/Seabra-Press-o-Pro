@@ -191,8 +191,13 @@ function Dashboard() {
       <header className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
-            <Activity className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg overflow-hidden">
+            <img 
+              src="/icon.png" 
+              alt="Logo" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </div>
             <div>
               <h1 className="font-bold text-xl tracking-tight text-white leading-tight">Seabra Pressão Pro</h1>
@@ -452,8 +457,13 @@ function LoginScreen() {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-6">
-          <div className="w-32 h-32 rounded-[2.5rem] bg-blue-600 flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(59,130,246,0.2)] rotate-3 hover:rotate-0 transition-transform duration-500">
-            <Activity className="w-16 h-16 text-white animate-[pulse_2s_ease-in-out_infinite]" />
+          <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(59,130,246,0.1)] rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden">
+            <img 
+              src="/icon.png" 
+              alt="Seabra Pressão Pro Logo" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-white tracking-tight">Seabra Pressão Pro</h1>
