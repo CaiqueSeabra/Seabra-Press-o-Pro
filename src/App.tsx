@@ -526,27 +526,60 @@ function LoginScreen() {
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md space-y-12 z-10"
       >
-        <div className="text-center space-y-10">
+        <div className="text-center space-y-8">
           <div className="relative inline-block">
+            {/* Background Glow */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 0.4, scale: 1.2 }}
+              transition={{ delay: 0.2, duration: 2, repeat: Infinity, repeatType: "reverse" }}
+              className="absolute inset-0 bg-blue-600/30 blur-[60px] rounded-full"
+            />
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.7, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center shadow-[0_12px_40px_rgba(59,130,246,0.6)] z-20 border-[6px] border-black"
+              transition={{ 
+                type: "spring", 
+                stiffness: 100, 
+                damping: 20,
+                delay: 0.3 
+              }}
+              className="relative w-48 h-48 rounded-[3.5rem] bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden group"
             >
-              <Activity className="w-8 h-8 text-white" />
-            </motion.div>
-            <div className="w-32 h-32 rounded-[2.8rem] bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden relative group">
               <img 
-                src="/icon.png" 
-                alt="Logo" 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                src="https://i.postimg.cc/9MZYCDPN/Seabra.jpg" 
+                alt="Logo Seabra Pressão Pro" 
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 to-black relative';
+                    fallback.innerHTML = '<div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>';
+                    parent.appendChild(fallback);
+                  }
+                }}
               />
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            </motion.div>
           </div>
-          <div className="space-y-3">
-            <h1 className="text-5xl font-black text-white tracking-tighter leading-none">Seabra Pressão</h1>
-            <p className="text-zinc-500 font-bold uppercase tracking-[0.25em] text-[10px]">
+          
+          <div className="space-y-3 relative">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex items-center justify-center gap-2 mb-1"
+            >
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-blue-500/50" />
+              <span className="text-[10px] uppercase tracking-[0.3em] font-black text-blue-500">Sistema Premium</span>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-blue-500/50" />
+            </motion.div>
+            <h1 className="text-5xl font-black text-white tracking-tighter leading-none drop-shadow-sm">Seabra Pressão</h1>
+            <p className="text-zinc-600 font-bold uppercase tracking-[0.25em] text-[10px]">
               Controle Clínico Personalizado
             </p>
           </div>
