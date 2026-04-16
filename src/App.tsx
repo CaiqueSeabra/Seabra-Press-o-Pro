@@ -6,9 +6,46 @@ import { DashboardChart } from './components/DashboardChart';
 import { InstallPWA } from './components/InstallPWA';
 import { ReportModal } from './components/ReportModal';
 import { Measurement, Period } from './types';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff } from 'lucide-react';
+import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff, Plus, History, TrendingUp, Info } from 'lucide-react';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 import { isToday } from 'date-fns';
 import { analyzeRisk } from './lib/bloodPressure';
 import { cn } from './lib/utils';
@@ -30,16 +67,28 @@ class ErrorBoundary extends React.Component<{children: ReactNode}, {hasError: bo
 
   render() {
     if (this.state.hasError) {
+      let displayMessage = "Ocorreu um erro inesperado.";
+      try {
+        const errData = JSON.parse(this.state.error?.message || "{}");
+        if (errData.error) {
+          displayMessage = `Erro de Banco de Dados: ${errData.error} (${errData.operationType})`;
+        } else {
+          displayMessage = this.state.error?.message || displayMessage;
+        }
+      } catch {
+        displayMessage = this.state.error?.message || displayMessage;
+      }
+
       return (
         <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 text-center">
           <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Algo deu errado</h1>
-          <p className="text-zinc-400 mb-4">{this.state.error?.message || "Erro desconhecido"}</p>
+          <p className="text-zinc-400 mb-6 max-w-md">{displayMessage}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-blue-600 px-6 py-2 rounded-lg font-bold"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-600/20"
           >
-            Recarregar
+            Recarregar Aplicativo
           </button>
         </div>
       );
@@ -82,8 +131,7 @@ function Dashboard() {
       setMeasurements(data);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching measurements:", error);
-      setLoading(false);
+      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/measurements`);
     });
 
     return () => unsubscribe();
@@ -93,14 +141,14 @@ function Dashboard() {
     if (!user) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, 'users', user.uid, 'measurements'), {
+      const path = `users/${user.uid}/measurements`;
+      await addDoc(collection(db, path), {
         userId: user.uid,
         ...data,
         timestamp: serverTimestamp()
       });
     } catch (error) {
-      console.error("Error adding measurement:", error);
-      alert("Erro ao salvar medição. Verifique sua conexão.");
+      handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/measurements`);
     } finally {
       setSaving(false);
     }
@@ -109,9 +157,10 @@ function Dashboard() {
   const handleDeleteMeasurement = async (id: string) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'measurements', id));
+      const path = `users/${user.uid}/measurements/${id}`;
+      await deleteDoc(doc(db, path));
     } catch (error) {
-      console.error("Error deleting measurement:", error);
+      handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/measurements/${id}`);
     }
   };
 
@@ -142,16 +191,8 @@ function Dashboard() {
       <header className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center shadow-lg shadow-blue-600/10 border border-zinc-800 overflow-hidden">
-            <img 
-              src="/icon.png" 
-              onError={(e) => {
-                e.currentTarget.src = 'https://img.icons8.com/fluency/240/blood-pressure.png';
-              }}
-              alt="Logo" 
-              className="w-full h-full object-cover" 
-              referrerPolicy="no-referrer" 
-            />
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <Activity className="w-7 h-7 text-white" />
           </div>
             <div>
               <h1 className="font-bold text-xl tracking-tight text-white leading-tight">Seabra Pressão Pro</h1>
@@ -363,6 +404,27 @@ function LoginScreen() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google Auth Error:", err);
+      if (err.code === 'auth/popup-blocked') {
+        setError('O popup foi bloqueado pelo navegador. Por favor, habilite popups para este site.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('O login foi cancelado antes de ser concluído.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // Ignore this one as it usually means another popup was opened
+      } else {
+        setError(`Erro ao entrar com Google: ${err.message || 'Tente novamente.'}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!email) {
       setError('Digite seu email no campo acima para redefinir a senha.');
@@ -390,16 +452,8 @@ function LoginScreen() {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-6">
-          <div className="w-28 h-28 rounded-[2rem] bg-zinc-900 flex items-center justify-center mx-auto shadow-2xl shadow-blue-600/20 rotate-3 hover:rotate-0 transition-transform duration-500 border border-zinc-800 overflow-hidden">
-            <img 
-              src="/icon.png" 
-              onError={(e) => {
-                e.currentTarget.src = 'https://img.icons8.com/fluency/512/blood-pressure.png';
-              }}
-              alt="Logo" 
-              className="w-full h-full object-cover" 
-              referrerPolicy="no-referrer" 
-            />
+          <div className="w-32 h-32 rounded-[2.5rem] bg-blue-600 flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(59,130,246,0.2)] rotate-3 hover:rotate-0 transition-transform duration-500">
+            <Activity className="w-16 h-16 text-white animate-[pulse_2s_ease-in-out_infinite]" />
           </div>
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-white tracking-tight">Seabra Pressão Pro</h1>
@@ -490,7 +544,7 @@ function LoginScreen() {
           </div>
 
           <button
-            onClick={signInWithGoogle}
+            onClick={handleGoogleSignIn}
             disabled={loading}
             className="w-full btn-secondary flex items-center justify-center gap-3"
           >

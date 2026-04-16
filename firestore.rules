@@ -45,6 +45,11 @@ service cloud.firestore {
       return request.resource.data.period in ['morning', 'afternoon', 'night'];
     }
 
+    function isRecent(time) {
+      return time > request.time - duration.value(5, 'm') &&
+             time <= request.time;
+    }
+
     function isValidMeasurement(userId) {
       return hasOnlyAllowedFields(['userId', 'period', 'systolic', 'diastolic', 'pulse', 'timestamp']) &&
              hasRequiredFields(['userId', 'period', 'systolic', 'diastolic', 'timestamp']) &&
@@ -53,7 +58,8 @@ service cloud.firestore {
              isPositive('systolic') && request.resource.data.systolic < 300 &&
              isPositive('diastolic') && request.resource.data.diastolic < 200 &&
              (!('pulse' in request.resource.data) || (isPositive('pulse') && request.resource.data.pulse < 250)) &&
-             request.resource.data.timestamp is timestamp;
+             request.resource.data.timestamp is timestamp &&
+             isRecent(request.resource.data.timestamp);
     }
 
     // ===============================================================

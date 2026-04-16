@@ -23,17 +23,17 @@ export default defineConfig(({mode}) => {
             display: 'standalone',
             icons: [
               {
-                src: 'https://img.icons8.com/fluency/192/blood-pressure.png',
+                src: 'https://img.icons8.com/color/192/heart-monitor.png',
                 sizes: '192x192',
                 type: 'image/png'
               },
               {
-                src: 'https://img.icons8.com/fluency/512/blood-pressure.png',
+                src: 'https://img.icons8.com/color/512/heart-monitor.png',
                 sizes: '512x512',
                 type: 'image/png'
               },
               {
-                src: 'https://img.icons8.com/fluency/512/blood-pressure.png',
+                src: 'https://img.icons8.com/color/512/heart-monitor.png',
                 sizes: '512x512',
                 type: 'image/png',
                 purpose: 'any maskable'
