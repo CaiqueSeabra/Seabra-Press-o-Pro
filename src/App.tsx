@@ -299,6 +299,7 @@ function Dashboard() {
             >
               {riskAlert && (
                 <motion.div 
+                  key={`risk-alert-${riskAlert.level}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
@@ -335,7 +336,7 @@ function Dashboard() {
               )}
 
               {hasMeasurements ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div key="stats-grid" className="grid grid-cols-2 gap-4">
                   <div className="glass-card p-6 flex flex-col">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Última</span>
                     <div className="flex items-baseline gap-1">

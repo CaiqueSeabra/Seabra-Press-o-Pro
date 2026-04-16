@@ -42,6 +42,10 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
       if (data.systolic) setSystolic(data.systolic.toString());
       if (data.diastolic) setDiastolic(data.diastolic.toString());
       if (data.pulse) setPulse(data.pulse.toString());
+      
+      if (!data.systolic && !data.diastolic) {
+        setErrorMsg("Não encontramos números de pressão na imagem. Verifique a iluminação e tente uma foto bem de frente.");
+      }
     } catch (error: any) {
       console.error("Extraction error:", error);
       setErrorMsg(`Erro: ${error.message || "Não foi possível extrair os dados da imagem. Tente novamente."}`);
@@ -119,7 +123,10 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
       </div>
       
       {errorMsg && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+        <div 
+          key="error-display"
+          className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-2"
+        >
           {errorMsg}
         </div>
       )}

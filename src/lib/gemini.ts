@@ -1,11 +1,22 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
-// Initialize the Gemini API client
-// The API key is injected via Vite's define plugin from process.env.GEMINI_API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize the Gemini API client lazily to ensure environment variables are loaded
+let aiClient: GoogleGenAI | null = null;
+
+function getAiClient() {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+      throw new Error("Chave da API do Gemini não encontrada. Certifique-se de que a variável GEMINI_API_KEY está configurada nos segredos (Secrets) do seu projeto no AI Studio.");
+    }
+    aiClient = new GoogleGenAI({ apiKey });
+  }
+  return aiClient;
+}
 
 export async function extractMeasurementFromImage(file: File) {
   try {
+    const ai = getAiClient();
     // Resize image before sending to reduce payload size and avoid errors
     const base64Data = await new Promise<string>((resolve, reject) => {
       const img = new Image();
@@ -54,7 +65,7 @@ export async function extractMeasurementFromImage(file: File) {
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-flash-latest', // Recommended latest flash model
       contents: [
         {
           role: 'user',
@@ -72,7 +83,6 @@ export async function extractMeasurementFromImage(file: File) {
         }
       ],
       config: {
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
@@ -86,14 +96,17 @@ export async function extractMeasurementFromImage(file: File) {
     });
 
     const text = response.text;
-    if (!text) throw new Error("No text returned");
+    if (!text) throw new Error("No text returned from Gemini");
     
     return JSON.parse(text);
   } catch (error: any) {
     console.error("Error extracting data from image:", error);
-    if (error.message && error.message.includes("API key not valid")) {
-      throw new Error("Chave da API do Gemini inválida ou não configurada. Por favor, configure sua chave no menu Settings do AI Studio.");
+    const msg = error.message || "";
+    
+    if (msg.includes("API key not valid") || msg.includes("not found")) {
+      throw new Error("Configuração Necessária: A chave do Gemini (GEMINI_API_KEY) está inválida ou ausente. Isso acontece pois no link compartilhado o app precisa da sua chave própria vinculada ao projeto. Vá em 'Settings' -> 'Secrets' no AI Studio e adicione GEMINI_API_KEY.");
     }
-    throw new Error("Não foi possível extrair os dados da imagem. Verifique se a imagem está nítida e tente novamente.");
+    
+    throw new Error("Não foi possível ler os dados da foto. Tente tirar uma foto mais de perto e com boa iluminação.");
   }
 }
