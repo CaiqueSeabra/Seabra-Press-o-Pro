@@ -223,7 +223,7 @@ function Dashboard() {
               </div>
               <span className="text-[10px] uppercase tracking-[0.2em] font-black text-blue-500/80">Premium Access</span>
             </motion.div>
-            <h1 className="font-black text-xl tracking-tighter text-white">Seabra Pressão</h1>
+            <h1 className="font-black text-xl tracking-tighter text-white">Seabra Pressão Pro</h1>
           </div>
           
           <div className="flex items-center gap-3">
@@ -619,13 +619,17 @@ function LoginScreen() {
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    const fallback = document.createElement('div');
-                    fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 to-black relative';
-                    fallback.innerHTML = '<div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>';
-                    parent.appendChild(fallback);
+                  if (target.src !== "https://i.postimg.cc/9MZYCDPN/Seabra.jpg") {
+                    target.src = "https://i.postimg.cc/9MZYCDPN/Seabra.jpg";
+                  } else {
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 to-black relative';
+                      fallback.innerHTML = '<div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>';
+                      parent.appendChild(fallback);
+                    }
                   }
                 }}
               />
@@ -644,7 +648,7 @@ function LoginScreen() {
               <span className="text-[10px] uppercase tracking-[0.3em] font-black text-blue-500">Sistema Premium</span>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-blue-500/50" />
             </motion.div>
-            <h1 className="text-5xl font-black text-white tracking-tighter leading-none drop-shadow-sm">Seabra Pressão</h1>
+            <h1 className="text-5xl font-black text-white tracking-tighter leading-none drop-shadow-sm">Seabra Pressão Pro</h1>
             <p className="text-zinc-400 font-bold uppercase tracking-[0.25em] text-[10px]">
               Controle Clínico Personalizado
             </p>
