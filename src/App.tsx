@@ -97,12 +97,19 @@ class ErrorBoundary extends React.Component<{children: ReactNode}, {hasError: bo
   }
 }
 
+import { motion, AnimatePresence } from 'motion/react';
+
 function Dashboard() {
   const { user, logout } = useAuth();
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'chart'>('dashboard');
+
+  const vibrate = (pattern: number | number[] = 10) => {
+    if ('vibrate' in navigator) navigator.vibrate(pattern);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -186,47 +193,27 @@ function Dashboard() {
   const latestMeasurement = hasMeasurements ? measurements[0] : null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24">
-      {/* Header */}
-      <header className="bg-zinc-950/80 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-30">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg overflow-hidden">
-            <img 
-              src="/icon.png" 
-              alt="Logo" 
-              className="w-full h-full object-cover"
-            />
-          </div>
-            <div>
-              <h1 className="font-bold text-xl tracking-tight text-white leading-tight">Seabra Pressão Pro</h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] font-medium text-zinc-500">Controle Inteligente da Pressão Arterial</p>
-            </div>
+    <div className="min-h-screen bg-black text-zinc-100 pb-32 bg-mesh">
+      <header className="fixed top-0 inset-x-0 bg-transparent backdrop-blur-3xl z-40">
+        <div className="max-w-xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex flex-col">
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-1.5"
+            >
+              <div className="w-5 h-5 rounded-md bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+                <Activity className="w-3 h-3 text-blue-500" />
+              </div>
+              <span className="text-[10px] uppercase tracking-[0.2em] font-black text-blue-500/80">Premium Access</span>
+            </motion.div>
+            <h1 className="font-black text-xl tracking-tighter text-white">Seabra Pressão</h1>
           </div>
           
-          <div className="flex items-center gap-2">
-            {measurements.length > 0 && (
-              <>
-                <button 
-                  onClick={handleDownloadPDF}
-                  className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all active:scale-95"
-                  title="Baixar PDF"
-                >
-                  <FileDown className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={handleSharePDF}
-                  className="p-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
-                  title="Compartilhar"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </>
-            )}
+          <div className="flex items-center gap-3">
             <button 
-              onClick={logout}
-              className="p-2.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-95"
-              title="Sair"
+              onClick={() => { vibrate(); logout(); }}
+              className="w-10 h-10 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all active:scale-95"
             >
               <LogOut className="w-5 h-5" />
             </button>
@@ -234,128 +221,174 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-        {riskAlert && (
-          <div className={cn(
-            "rounded-2xl p-5 flex items-start gap-4 border transition-all",
-            riskAlert.level === 'critical' && "bg-red-500/10 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]",
-            riskAlert.level === 'danger' && "bg-orange-500/10 border-orange-500/30",
-            riskAlert.level === 'warning' && "bg-yellow-500/10 border-yellow-500/30"
-          )}>
-            <div className={cn(
-              "p-2 rounded-xl shrink-0",
-              riskAlert.level === 'critical' && "bg-red-500/20 text-red-500",
-              riskAlert.level === 'danger' && "bg-orange-500/20 text-orange-400",
-              riskAlert.level === 'warning' && "bg-yellow-500/20 text-yellow-400"
-            )}>
-              {riskAlert.level === 'critical' ? (
-                <AlertOctagon className="w-6 h-6" />
-              ) : (
-                <AlertTriangle className="w-6 h-6" />
+      <main className="max-w-xl mx-auto px-6 pt-24 space-y-8">
+        <AnimatePresence mode="wait">
+          {activeTab === 'dashboard' && (
+            <motion.div 
+              key="dashboard"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="space-y-8"
+            >
+              {riskAlert && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn(
+                    "rounded-[2.5rem] p-6 flex flex-col gap-4 border transition-all",
+                    riskAlert.level === 'critical' && "bg-red-600/10 border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.1)]",
+                    riskAlert.level === 'danger' && "bg-orange-600/10 border-orange-500/30",
+                    riskAlert.level === 'warning' && "bg-yellow-600/10 border-yellow-500/30"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "p-2.5 rounded-2xl shrink-0",
+                      riskAlert.level === 'critical' && "bg-red-500/20 text-red-500",
+                      riskAlert.level === 'danger' && "bg-orange-500/20 text-orange-400",
+                      riskAlert.level === 'warning' && "bg-yellow-500/20 text-yellow-400"
+                    )}>
+                      {riskAlert.level === 'critical' ? (
+                        <AlertOctagon className="w-6 h-6" />
+                      ) : (
+                        <AlertTriangle className="w-6 h-6" />
+                      )}
+                    </div>
+                    <h3 className={cn(
+                      "font-black text-lg tracking-tight",
+                      riskAlert.level === 'critical' && "text-red-500",
+                      riskAlert.level === 'danger' && "text-orange-400",
+                      riskAlert.level === 'warning' && "text-yellow-400"
+                    )}>{riskAlert.title}</h3>
+                  </div>
+                  <p className="text-sm text-zinc-400 leading-relaxed font-medium">
+                    {riskAlert.message}
+                  </p>
+                </motion.div>
               )}
-            </div>
-            <div>
-              <h3 className={cn(
-                "font-bold text-lg",
-                riskAlert.level === 'critical' && "text-red-500",
-                riskAlert.level === 'danger' && "text-orange-400",
-                riskAlert.level === 'warning' && "text-yellow-400"
-              )}>{riskAlert.title}</h3>
-              <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
-                {riskAlert.message}
-              </p>
-            </div>
-          </div>
-        )}
 
-        {hasMeasurements && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="glass-card p-5 group hover:border-zinc-700 transition-all">
-              <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Última Medição</h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white tracking-tighter">{latestMeasurement?.systolic}</span>
-                <span className="text-xl text-zinc-700 font-light">/</span>
-                <span className="text-3xl font-bold text-white tracking-tighter">{latestMeasurement?.diastolic}</span>
-                <span className="text-xs text-zinc-500 ml-1 font-medium">mmHg</span>
-              </div>
-            </div>
-            <div className="glass-card p-5 group hover:border-zinc-700 transition-all">
-              <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Média Diária</h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white tracking-tighter">{avgSysToday || '--'}</span>
-                <span className="text-xl text-zinc-700 font-light">/</span>
-                <span className="text-3xl font-bold text-white tracking-tighter">{avgDiaToday || '--'}</span>
-                <span className="text-xs text-zinc-500 ml-1 font-medium">mmHg</span>
-              </div>
-            </div>
-            <div className="glass-card p-5 group hover:border-zinc-700 transition-all">
-              <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Média Geral</h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-white tracking-tighter">{avgSysTotal}</span>
-                <span className="text-xl text-zinc-700 font-light">/</span>
-                <span className="text-3xl font-bold text-white tracking-tighter">{avgDiaTotal}</span>
-                <span className="text-xs text-zinc-500 ml-1 font-medium">mmHg</span>
-              </div>
-            </div>
-            <div className="glass-card p-5 group hover:border-zinc-700 transition-all">
-              <h3 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-3">Status Atual</h3>
-              <div className="h-[44px] flex items-center">
-                <span className={cn(
-                  "text-lg font-bold tracking-tight",
-                  riskAlert?.level === 'critical' ? 'text-red-500' :
-                  riskAlert?.level === 'danger' ? 'text-orange-500' :
-                  riskAlert?.level === 'warning' ? 'text-yellow-500' : 'text-green-500'
-                )}>
-                  {riskAlert ? riskAlert.title : 'Normal'}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+              {hasMeasurements ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="glass-card p-6 flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Última</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-white">{latestMeasurement?.systolic}</span>
+                      <span className="text-xl text-zinc-700 font-light">/</span>
+                      <span className="text-3xl font-black text-white">{latestMeasurement?.diastolic}</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-600 font-bold mt-1">mmHg</span>
+                  </div>
+                  <div className="glass-card p-6 flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-4">Média Hoje</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-white">{avgSysToday || '--'}</span>
+                      <span className="text-xl text-zinc-700 font-light">/</span>
+                      <span className="text-3xl font-black text-white">{avgDiaToday || '--'}</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-600 font-bold mt-1">mmHg</span>
+                  </div>
+                  <div className="glass-card p-6 flex flex-col col-span-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Média Geral</span>
+                      <TrendingUp className="w-4 h-4 text-blue-500/50" />
+                    </div>
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-black text-white">{avgSysTotal}</span>
+                        <span className="text-2xl text-zinc-700 font-light">/</span>
+                        <span className="text-4xl font-black text-white">{avgDiaTotal}</span>
+                        <span className="text-sm text-zinc-500 ml-2 font-bold uppercase tracking-widest">mmHg</span>
+                      </div>
+                      <div className={cn(
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
+                        riskAlert?.level === 'critical' ? 'bg-red-500/10 text-red-400' :
+                        riskAlert?.level === 'danger' ? 'bg-orange-500/10 text-orange-400' :
+                        riskAlert?.level === 'warning' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-green-500/10 text-green-400'
+                      )}>
+                        {riskAlert ? riskAlert.title : 'Ideal'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="glass-card p-12 text-center space-y-4">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                    <History className="w-8 h-8 text-zinc-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Nenhuma Medição</h3>
+                    <p className="text-zinc-500 text-sm mt-1">Comece adicionando sua primeira aferição abaixo.</p>
+                  </div>
+                </div>
+              )}
 
-        {/* Tips Section */}
-        <div className="glass-card p-6 bg-zinc-900/30">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
-              <Activity className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white">Como medir corretamente?</h3>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Dicas para uma aferição precisa</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-zinc-400">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span>Fique sentado em silêncio por 5 minutos antes.</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span>Mantenha o braço na altura do coração.</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span>Pés apoiados no chão e costas encostadas.</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span>Não fume ou tome café 30 min antes.</span>
-            </div>
-          </div>
-        </div>
+              <div className="glass-card p-6 bg-zinc-900/20 overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-3">
+                  <Info className="w-4 h-4 text-white/10" />
+                </div>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white">Dicas de Saúde</h3>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-blue-500/60 font-black">Como aferir corretamente</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    "Repouse por 5 min antes da medição.",
+                    "Pés no chão e costas apoiadas.",
+                    "Braço relaxado na altura do coração.",
+                    "Evite cafeína 30 min antes."
+                  ].map((tip, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+                      <span className="text-sm text-zinc-400 font-medium">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        <MeasurementForm onSubmit={handleAddMeasurement} loading={saving} />
-        
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <DashboardChart measurements={measurements} />
-            <HistoryList measurements={measurements} onDelete={handleDeleteMeasurement} />
-          </div>
-        )}
+              <MeasurementForm 
+                onSubmit={(data) => { vibrate(20); handleAddMeasurement(data); }} 
+                loading={saving} 
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'chart' && (
+            <motion.div 
+              key="chart"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <DashboardChart measurements={measurements} />
+            </motion.div>
+          )}
+
+          {activeTab === 'history' && (
+            <motion.div 
+              key="history"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-black text-white tracking-tight">Histórico</h3>
+                <div className="flex gap-2">
+                  <button onClick={() => { vibrate(); handleDownloadPDF(); }} className="p-3 bg-white/5 rounded-2xl text-zinc-400"><FileDown className="w-5 h-5" /></button>
+                  <button onClick={() => { vibrate(); handleSharePDF(); }} className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/20"><Share2 className="w-5 h-5" /></button>
+                </div>
+              </div>
+              <HistoryList measurements={measurements} onDelete={(id) => { vibrate([10, 5, 10]); handleDeleteMeasurement(id); }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <ReportModal 
           isOpen={isReportModalOpen} 
@@ -363,6 +396,29 @@ function Dashboard() {
           measurements={measurements}
         />
       </main>
+
+      {/* Navigation Bar */}
+      <nav className="fixed bottom-0 inset-x-0 glass-panel pb-safe z-40">
+        <div className="max-w-xl mx-auto px-6 h-20 flex items-center justify-around">
+          {[
+            { id: 'dashboard', icon: Activity, label: 'Hoje' },
+            { id: 'chart', icon: TrendingUp, label: 'Gráfico' },
+            { id: 'history', icon: History, label: 'Logs' }
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => { vibrate(5); setActiveTab(item.id as any); }}
+              className={cn(
+                "flex flex-col items-center gap-1.5 transition-all duration-300 px-6 py-2 rounded-2xl",
+                activeTab === item.id ? "text-blue-500" : "text-zinc-500"
+              )}
+            >
+              <item.icon className={cn("w-6 h-6", activeTab === item.id && "drop-shadow-[0_0_8px_rgba(59,130,246,0.3)]")} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
@@ -377,8 +433,13 @@ function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const vibrate = (pattern: number | number[] = 10) => {
+    if ('vibrate' in navigator) navigator.vibrate(pattern);
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    vibrate(20);
     setError('');
     setResetMessage('');
     setLoading(true);
@@ -409,6 +470,7 @@ function LoginScreen() {
   };
 
   const handleGoogleSignIn = async () => {
+    vibrate(10);
     setError('');
     setLoading(true);
     try {
@@ -430,6 +492,7 @@ function LoginScreen() {
   };
 
   const handleResetPassword = async () => {
+    vibrate(5);
     if (!email) {
       setError('Digite seu email no campo acima para redefinir a senha.');
       return;
@@ -453,62 +516,86 @@ function LoginScreen() {
   };
   
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-6">
-          <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(59,130,246,0.1)] rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden">
-            <img 
-              src="/icon.png" 
-              alt="Seabra Pressão Pro Logo" 
-              className="w-full h-full object-cover"
-            />
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 bg-mesh overflow-hidden relative">
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md space-y-12 z-10"
+      >
+        <div className="text-center space-y-10">
+          <div className="relative inline-block">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
+              className="absolute -top-12 left-1/2 -translate-x-1/2 w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center shadow-[0_12px_40px_rgba(59,130,246,0.6)] z-20 border-[6px] border-black"
+            >
+              <Activity className="w-8 h-8 text-white" />
+            </motion.div>
+            <div className="w-32 h-32 rounded-[2.8rem] bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden relative group">
+              <img 
+                src="/icon.png" 
+                alt="Logo" 
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black text-white tracking-tight">Seabra Pressão Pro</h1>
-            <p className="text-zinc-500 font-medium tracking-wide">
-              Controle Inteligente da Pressão Arterial
+          <div className="space-y-3">
+            <h1 className="text-5xl font-black text-white tracking-tighter leading-none">Seabra Pressão</h1>
+            <p className="text-zinc-500 font-bold uppercase tracking-[0.25em] text-[10px]">
+              Controle Clínico Personalizado
             </p>
           </div>
         </div>
 
-        <div className="glass-card p-8 space-y-6">
+        <div className="glass-card p-8 space-y-8">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
+            <motion.div 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
           {resetMessage && (
-            <div className="bg-green-500/10 border border-green-500/50 text-green-500 p-4 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
+            <motion.div 
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded-2xl text-xs font-bold uppercase tracking-widest text-center"
+            >
               {resetMessage}
-            </div>
+            </motion.div>
           )}
 
-          <form onSubmit={handleEmailAuth} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 ml-1">Email</label>
+          <form onSubmit={handleEmailAuth} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest font-black text-zinc-600 ml-1">Email Profissional</label>
               <input
                 type="email"
-                placeholder="seu@email.com"
+                placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+                className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-700"
                 required
-                autoComplete="email"
               />
             </div>
             
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Senha</label>
+                <label className="text-[10px] uppercase tracking-widest font-black text-zinc-600">Sua Senha</label>
                 {!isRegistering && (
                   <button
                     type="button"
                     onClick={handleResetPassword}
-                    disabled={loading}
-                    className="text-[10px] uppercase tracking-widest font-bold text-blue-500 hover:text-blue-400 transition-colors"
+                    className="text-[10px] uppercase tracking-widest font-black text-blue-500"
                   >
-                    Esqueceu?
+                    Recuperar
                   </button>
                 )}
               </div>
@@ -518,15 +605,13 @@ function LoginScreen() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-4 pr-12 py-3.5 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+                  className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-700"
                   required
-                  minLength={6}
-                  autoComplete={isRegistering ? "new-password" : "current-password"}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors p-2"
+                  onClick={() => { vibrate(5); setShowPassword(!showPassword); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-zinc-400 p-2"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -536,24 +621,39 @@ function LoginScreen() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary mt-4"
+              className="w-full btn-primary"
             >
-              {loading ? 'Processando...' : (isRegistering ? 'Criar Minha Conta' : 'Entrar no Aplicativo')}
+              {loading ? 'Entrando...' : (isRegistering ? 'Criar Minha Conta' : 'Acessar Consultório')}
             </button>
           </form>
 
-          <button
-            onClick={() => {
-              setIsRegistering(!isRegistering);
-              setError('');
-              setResetMessage('');
-            }}
-            className="w-full text-zinc-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-center"
-          >
-            {isRegistering ? 'Já tem uma conta? Login' : 'Não tem conta? Cadastre-se'}
-          </button>
+          <div className="flex flex-col gap-6 items-center">
+            <div className="flex items-center gap-4 w-full">
+              <div className="h-px bg-white/5 flex-1" />
+              <span className="text-[10px] uppercase tracking-widest font-black text-zinc-800">ou continue com</span>
+              <div className="h-px bg-white/5 flex-1" />
+            </div>
+
+            <div className="grid grid-cols-1 w-full gap-3">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex items-center justify-center gap-3 bg-white text-black font-black py-4 px-8 rounded-2xl active:scale-[0.97] transition-all shadow-xl shadow-white/5"
+              >
+                <Share2 className="w-5 h-5" />
+                Google Account
+              </button>
+            </div>
+
+            <button
+              onClick={() => { vibrate(5); setIsRegistering(!isRegistering); }}
+              className="text-[10px] uppercase tracking-[0.25em] font-black text-zinc-600 hover:text-white transition-colors"
+            >
+              {isRegistering ? 'Já cliquei em login' : 'Quero me cadastrar'}
+            </button>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

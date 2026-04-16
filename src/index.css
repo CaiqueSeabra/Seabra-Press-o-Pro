@@ -6,33 +6,51 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-zinc-950: #09090b;
-  --color-zinc-900: #18181b;
-  --color-zinc-800: #27272a;
-  --color-zinc-700: #3f3f46;
+  --color-zinc-900: #121214;
+  --color-zinc-800: #1c1c1f;
+  --color-zinc-700: #2a2a2e;
   --color-zinc-400: #a1a1aa;
   
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
 }
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-100 font-sans antialiased;
+    @apply bg-black text-zinc-100 font-sans antialiased overflow-x-hidden selection:bg-blue-500/30;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-zinc-900/50 border border-zinc-800 backdrop-blur-sm rounded-2xl;
+    @apply bg-zinc-900/40 border border-white/5 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.3)];
+  }
+  
+  .glass-panel {
+    @apply bg-zinc-900/60 border-t border-white/5 backdrop-blur-2xl;
   }
   
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-2xl transition-all active:scale-[0.97] shadow-lg shadow-blue-600/20 disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-secondary {
-    @apply bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold py-3 px-6 rounded-xl transition-all active:scale-95;
+    @apply bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-100 font-bold py-4 px-8 rounded-2xl transition-all active:scale-[0.97];
   }
+
+  .nav-item-active {
+    @apply text-blue-500 relative after:content-[''] after:absolute after:-bottom-2 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-blue-500 after:rounded-full after:shadow-[0_0_8px_rgba(59,130,246,0.6)];
+  }
+}
+
+/* Fluid Gradiants for premium feel */
+.bg-mesh {
+  background: 
+    radial-gradient(at 0% 0%, hsla(242,100%,70%,0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(189,100%,70%,0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, hsla(242,100%,70%,0.05) 0px, transparent 50%);
 }
 
 /* Custom scrollbar */
