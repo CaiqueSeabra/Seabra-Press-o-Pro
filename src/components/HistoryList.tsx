@@ -174,7 +174,8 @@ export function HistoryList({ measurements, onDelete }: Props) {
                             ) : (
                               <button 
                                 onClick={() => measurement.id && setConfirmDeleteId(measurement.id)}
-                                className="p-2 text-zinc-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                title="Excluir medição"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
