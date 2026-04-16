@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Period } from '../types';
-import { Sun, Sunset, Moon, Activity, Heart, HeartPulse, ImagePlus } from 'lucide-react';
+import { Sun, Sunset, Moon, Activity, Heart, HeartPulse, Camera, Image, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractMeasurementFromImage } from '../lib/gemini';
 
@@ -19,6 +19,18 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
+  // Automate period selection based on current time
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      setPeriod('morning');
+    } else if (hour >= 12 && hour < 18) {
+      setPeriod('afternoon');
+    } else {
+      setPeriod('night');
+    }
+  }, []);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -30,8 +42,9 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
       if (data.systolic) setSystolic(data.systolic.toString());
       if (data.diastolic) setDiastolic(data.diastolic.toString());
       if (data.pulse) setPulse(data.pulse.toString());
-    } catch (error) {
-      setErrorMsg("Não foi possível extrair os dados da imagem. Tente novamente ou preencha manualmente.");
+    } catch (error: any) {
+      console.error("Extraction error:", error);
+      setErrorMsg(`Erro: ${error.message || "Não foi possível extrair os dados da imagem. Tente novamente."}`);
     } finally {
       setIsScanning(false);
       if (cameraInputRef.current) cameraInputRef.current.value = '';
@@ -57,11 +70,14 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-900 rounded-2xl p-4 sm:p-6 shadow-xl border border-zinc-800">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-xl font-semibold text-zinc-100">Nova Medição</h2>
+    <form onSubmit={handleSubmit} className="glass-card p-6 space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-black text-white tracking-tight">Nova Medição</h2>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-500">Registre seus dados manualmente ou por foto</p>
+        </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <input 
             type="file" 
             accept="image/*" 
@@ -81,87 +97,88 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
             type="button"
             onClick={() => cameraInputRef.current?.click()}
             disabled={isScanning || loading}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50 border border-zinc-700"
           >
             {isScanning ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <ImagePlus className="w-4 h-4" />
+              <Camera className="w-4 h-4" />
             )}
-            {isScanning ? 'Analisando...' : 'Câmera'}
+            Câmera
           </button>
           <button
             type="button"
             onClick={() => galleryInputRef.current?.click()}
             disabled={isScanning || loading}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-blue-400 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50 border border-zinc-700"
           >
+            <Image className="w-4 h-4" />
             Galeria
           </button>
         </div>
       </div>
       
       {errorMsg && (
-        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-medium animate-in fade-in slide-in-from-top-2">
           {errorMsg}
         </div>
       )}
       
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Period Selection */}
-        <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-3">Período</label>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-3">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 ml-1">Período</label>
+          <div className="grid grid-cols-3 gap-4">
             <button
               type="button"
               onClick={() => setPeriod('morning')}
               className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95",
+                "flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95",
                 period === 'morning' 
-                  ? "bg-white/10 border-white text-white shadow-[0_0_15px_rgba(255,255,255,0.4)]" 
-                  : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  ? "bg-zinc-900 border-zinc-100 text-white shadow-[0_0_20px_rgba(255,255,255,0.1)]" 
+                  : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700"
               )}
             >
-              <Sun className="w-6 h-6 mb-2" />
-              <span className="text-xs font-medium">Manhã</span>
+              <Sun className={cn("w-6 h-6 mb-2", period === 'morning' ? "text-white" : "text-zinc-600")} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Manhã</span>
             </button>
             <button
               type="button"
               onClick={() => setPeriod('afternoon')}
               className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95",
+                "flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95",
                 period === 'afternoon' 
-                  ? "bg-orange-500/20 border-orange-500 text-orange-400" 
-                  : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  ? "bg-zinc-900 border-yellow-500 text-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]" 
+                  : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700"
               )}
             >
-              <Sunset className="w-6 h-6 mb-2" />
-              <span className="text-xs font-medium">Tarde</span>
+              <Sunset className={cn("w-6 h-6 mb-2", period === 'afternoon' ? "text-yellow-500" : "text-zinc-600")} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Tarde</span>
             </button>
             <button
               type="button"
               onClick={() => setPeriod('night')}
               className={cn(
-                "flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95",
+                "flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95",
                 period === 'night' 
-                  ? "bg-indigo-500/20 border-indigo-500 text-indigo-400" 
-                  : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                  ? "bg-zinc-900 border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)]" 
+                  : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700"
               )}
             >
-              <Moon className="w-6 h-6 mb-2" />
-              <span className="text-xs font-medium">Noite</span>
+              <Moon className={cn("w-6 h-6 mb-2", period === 'night' ? "text-cyan-400" : "text-zinc-600")} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Noite</span>
             </button>
           </div>
         </div>
 
         {/* Measurements */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-red-400" />
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 ml-1 flex items-center gap-2">
+              <Activity className="w-3 h-3 text-red-500" />
               Sistólica (SYS)
             </label>
-            <div className="relative">
+            <div className="relative group">
               <input
                 type="number"
                 inputMode="numeric"
@@ -169,21 +186,21 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
                 value={systolic}
                 onChange={(e) => setSystolic(e.target.value)}
                 placeholder="120"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-2xl font-bold text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-zinc-600"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-5 text-3xl font-black text-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all placeholder:text-zinc-800"
                 required
                 min="50"
                 max="250"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-zinc-500 font-medium">mmHg</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs text-zinc-600 font-bold uppercase tracking-widest">mmHg</span>
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-blue-400" />
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 ml-1 flex items-center gap-2">
+              <Heart className="w-3 h-3 text-blue-500" />
               Diastólica (DIA)
             </label>
-            <div className="relative">
+            <div className="relative group">
               <input
                 type="number"
                 inputMode="numeric"
@@ -191,22 +208,22 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
                 value={diastolic}
                 onChange={(e) => setDiastolic(e.target.value)}
                 placeholder="80"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-2xl font-bold text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-zinc-600"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-5 text-3xl font-black text-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all placeholder:text-zinc-800"
                 required
                 min="30"
                 max="150"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-zinc-500 font-medium">mmHg</span>
+              <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs text-zinc-600 font-bold uppercase tracking-widest">mmHg</span>
             </div>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
-            <HeartPulse className="w-4 h-4 text-green-400" />
+        <div className="space-y-2">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-zinc-500 ml-1 flex items-center gap-2">
+            <HeartPulse className="w-3 h-3 text-green-500" />
             Pulso
           </label>
-          <div className="relative">
+          <div className="relative group">
             <input
               type="number"
               inputMode="numeric"
@@ -214,20 +231,25 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
               value={pulse}
               onChange={(e) => setPulse(e.target.value)}
               placeholder="70 (Opcional)"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-2xl font-bold text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-zinc-600"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-5 text-3xl font-black text-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all placeholder:text-zinc-800"
               min="30"
               max="200"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-zinc-500 font-medium">bpm</span>
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs text-zinc-600 font-bold uppercase tracking-widest">bpm</span>
           </div>
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+          disabled={loading || isScanning}
+          className="w-full btn-primary py-5 text-lg"
         >
-          {loading ? 'Salvando...' : 'Salvar Medição'}
+          {loading ? (
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>Salvando...</span>
+            </div>
+          ) : 'Salvar Medição'}
         </button>
       </div>
     </form>

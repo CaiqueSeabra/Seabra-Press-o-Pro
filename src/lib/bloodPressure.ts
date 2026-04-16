@@ -1,65 +1,79 @@
 import { ClassificationResult, Measurement } from '../types';
 
 export function classifyBloodPressure(systolic: number, diastolic: number): ClassificationResult {
-  // 7. Perigo Extremo (Crise hipertensiva)
-  if (systolic >= 180 || diastolic >= 120) {
+  // Crise hipertensiva / Estágio 3
+  if (systolic >= 180 || diastolic >= 110) {
     return {
-      label: 'Emergência',
+      label: 'Crise Hipertensiva',
+      status: 'Emergência',
       color: 'text-red-600',
       bgColor: 'bg-red-600/20',
+      level: 'emergency',
     };
   }
 
-  // 6. Pressão Muito Alta (Hipertensão estágio 2)
-  if (systolic >= 140 || diastolic >= 90) {
+  // Alta (Estágio 2)
+  if (systolic >= 160 || diastolic >= 100) {
     return {
-      label: 'Muito Alta',
+      label: 'Alta (Estágio 2)',
+      status: 'Moderada',
       color: 'text-red-500',
       bgColor: 'bg-red-500/10',
-    };
-  }
-  
-  // 5. Pressão Alta (Hipertensão estágio 1)
-  if ((systolic >= 130 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) {
-    return {
-      label: 'Alta',
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10',
-    };
-  }
-  
-  // 4. Pressão Elevada (atenção)
-  if (systolic >= 120 && systolic <= 129 && diastolic < 80) {
-    return {
-      label: 'Elevada',
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-500/10',
+      level: 'stage2',
     };
   }
 
-  // 1. Pressão Muito Baixa (Hipotensão grave)
+  // Alta (Estágio 1)
+  if (systolic >= 140 || diastolic >= 90) {
+    return {
+      label: 'Alta (Estágio 1)',
+      status: 'Hipertensão',
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500/10',
+      level: 'stage1',
+    };
+  }
+
+  // Pré-hipertensão
+  if (systolic >= 120 || diastolic >= 80) {
+    return {
+      label: 'Pré-hipertensão',
+      status: 'Alerta',
+      color: 'text-yellow-500',
+      bgColor: 'bg-yellow-500/10',
+      level: 'elevated',
+    };
+  }
+
+  // Muito Baixa
   if (systolic < 90 || diastolic < 60) {
     return {
       label: 'Muito Baixa',
+      status: 'Hipotensão',
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
+      level: 'low',
     };
   }
 
-  // 2. Pressão Baixa (normal para algumas pessoas)
+  // Baixa
   if ((systolic >= 90 && systolic <= 99) || (diastolic >= 60 && diastolic <= 69)) {
     return {
       label: 'Baixa',
+      status: 'Atenção',
       color: 'text-teal-400',
       bgColor: 'bg-teal-400/10',
+      level: 'low',
     };
   }
-  
-  // 3. Pressão Normal (ideal)
+
+  // Normal
   return {
     label: 'Normal',
+    status: 'Saudável',
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
+    level: 'normal',
   };
 }
 

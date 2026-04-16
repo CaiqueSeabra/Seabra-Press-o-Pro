@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
 // Initialize the Gemini API client
 // The API key is injected via Vite's define plugin from process.env.GEMINI_API_KEY
@@ -6,21 +6,55 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function extractMeasurementFromImage(file: File) {
   try {
-    // Convert File to base64
+    // Resize image before sending to reduce payload size and avoid errors
     const base64Data = await new Promise<string>((resolve, reject) => {
+      const img = new Image();
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-        const base64 = base64String.split(',')[1];
-        resolve(base64);
+      
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
       };
-      reader.onerror = reject;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl.split(',')[1]);
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      
       reader.readAsDataURL(file);
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         {
           role: 'user',
@@ -31,13 +65,14 @@ export async function extractMeasurementFromImage(file: File) {
             {
               inlineData: {
                 data: base64Data,
-                mimeType: file.type
+                mimeType: 'image/jpeg'
               }
             }
           ]
         }
       ],
       config: {
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
@@ -54,8 +89,11 @@ export async function extractMeasurementFromImage(file: File) {
     if (!text) throw new Error("No text returned");
     
     return JSON.parse(text);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error extracting data from image:", error);
-    throw error;
+    if (error.message && error.message.includes("API key not valid")) {
+      throw new Error("Chave da API do Gemini inválida ou não configurada. Por favor, configure sua chave no menu Settings do AI Studio.");
+    }
+    throw new Error("Não foi possível extrair os dados da imagem. Verifique se a imagem está nítida e tente novamente.");
   }
 }

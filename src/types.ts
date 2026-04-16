@@ -10,10 +10,20 @@ export interface Measurement {
   timestamp: Date;
 }
 
-export type Classification = 'Normal' | 'Elevada' | 'Hipertensão 1' | 'Hipertensão 2';
+export type Classification = 
+  | 'Hipotensão' 
+  | 'Atenção' 
+  | 'Saudável' 
+  | 'Alerta' 
+  | 'Hipertensão' 
+  | 'Moderada' 
+  | 'Grave' 
+  | 'Emergência';
 
 export interface ClassificationResult {
-  label: Classification;
+  label: string; // Display label (e.g., "Muito Baixa")
+  status: Classification; // Status from the table (e.g., "Hipotensão (risco)")
   color: string;
   bgColor: string;
+  level: 'normal' | 'elevated' | 'stage1' | 'stage2' | 'emergency' | 'low';
 }
