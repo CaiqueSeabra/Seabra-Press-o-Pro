@@ -5,9 +5,10 @@ let aiClient: GoogleGenAI | null = null;
 
 function getAiClient() {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Check for PHOTO_API_KEY first (non-reserved) then fallback to GEMINI_API_KEY
+    const apiKey = process.env.PHOTO_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-      throw new Error("Chave da API do Gemini não encontrada. Certifique-se de que a variável GEMINI_API_KEY está configurada nos segredos (Secrets) do seu projeto no AI Studio.");
+      throw new Error("Configuração necessária: Vá em 'Settings' -> 'Secrets' no AI Studio e adicione a chave com o nome PHOTO_API_KEY.");
     }
     aiClient = new GoogleGenAI({ apiKey });
   }
@@ -104,7 +105,7 @@ export async function extractMeasurementFromImage(file: File) {
     const msg = error.message || "";
     
     if (msg.includes("API key not valid") || msg.includes("not found")) {
-      throw new Error("Configuração Necessária: A chave do Gemini (GEMINI_API_KEY) está inválida ou ausente. Isso acontece pois no link compartilhado o app precisa da sua chave própria vinculada ao projeto. Vá em 'Settings' -> 'Secrets' no AI Studio e adicione GEMINI_API_KEY.");
+      throw new Error("Erro de Chave: A PHOTO_API_KEY está inválida ou não foi salva nos Secrets. Verifique as configurações no menu Settings.");
     }
     
     throw new Error("Não foi possível ler os dados da foto. Tente tirar uma foto mais de perto e com boa iluminação.");
