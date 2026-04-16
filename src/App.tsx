@@ -548,7 +548,7 @@ function LoginScreen() {
               className="relative w-48 h-48 rounded-[3.5rem] bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden group"
             >
               <img 
-                src="https://i.postimg.cc/9MZYCDPN/Seabra.jpg" 
+                src="/icon.png" 
                 alt="Logo Seabra Pressão Pro" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                 onError={(e) => {
@@ -579,7 +579,7 @@ function LoginScreen() {
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-blue-500/50" />
             </motion.div>
             <h1 className="text-5xl font-black text-white tracking-tighter leading-none drop-shadow-sm">Seabra Pressão</h1>
-            <p className="text-zinc-600 font-bold uppercase tracking-[0.25em] text-[10px]">
+            <p className="text-zinc-400 font-bold uppercase tracking-[0.25em] text-[10px]">
               Controle Clínico Personalizado
             </p>
           </div>
@@ -608,20 +608,20 @@ function LoginScreen() {
 
           <form onSubmit={handleEmailAuth} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-black text-zinc-600 ml-1">Email Profissional</label>
+              <label className="text-[10px] uppercase tracking-widest font-black text-blue-500/90 ml-1">Email Profissional</label>
               <input
                 type="email"
                 placeholder="nome@exemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-700"
+                className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-500"
                 required
               />
             </div>
             
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-[10px] uppercase tracking-widest font-black text-zinc-600">Sua Senha</label>
+                <label className="text-[10px] uppercase tracking-widest font-black text-blue-500/90">Sua Senha</label>
                 {!isRegistering && (
                   <button
                     type="button"
@@ -638,7 +638,7 @@ function LoginScreen() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-700"
+                  className="w-full bg-white/5 border border-white/5 text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 transition-all font-medium placeholder:text-zinc-500"
                   required
                 />
                 <button
@@ -662,9 +662,9 @@ function LoginScreen() {
 
           <div className="flex flex-col gap-6 items-center">
             <div className="flex items-center gap-4 w-full">
-              <div className="h-px bg-white/5 flex-1" />
-              <span className="text-[10px] uppercase tracking-widest font-black text-zinc-800">ou continue com</span>
-              <div className="h-px bg-white/5 flex-1" />
+              <div className="h-px bg-white/10 flex-1" />
+              <span className="text-[10px] uppercase tracking-widest font-black text-zinc-400">ou continue com</span>
+              <div className="h-px bg-white/10 flex-1" />
             </div>
 
             <div className="grid grid-cols-1 w-full gap-3">
@@ -680,7 +680,7 @@ function LoginScreen() {
 
             <button
               onClick={() => { vibrate(5); setIsRegistering(!isRegistering); }}
-              className="text-[10px] uppercase tracking-[0.25em] font-black text-zinc-600 hover:text-white transition-colors"
+              className="text-[10px] uppercase tracking-[0.25em] font-black text-zinc-400 hover:text-white transition-colors py-2"
             >
               {isRegistering ? 'Já cliquei em login' : 'Quero me cadastrar'}
             </button>
