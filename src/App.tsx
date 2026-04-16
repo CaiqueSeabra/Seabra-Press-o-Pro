@@ -46,9 +46,10 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
-import { isToday } from 'date-fns';
+import { isToday, subDays, isAfter } from 'date-fns';
 import { analyzeRisk } from './lib/bloodPressure';
 import { cn } from './lib/utils';
+import { Filter, Calendar, Sun, Sunset, Moon } from 'lucide-react';
 
 class ErrorBoundary extends React.Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
   state = { hasError: false, error: null };
@@ -106,6 +107,8 @@ function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'chart'>('dashboard');
+  const [periodFilter, setPeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'night'>('all');
+  const [rangeFilter, setRangeFilter] = useState<'all' | '7days' | '30days'>('all');
 
   const vibrate = (pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
@@ -179,18 +182,31 @@ function Dashboard() {
     setIsReportModalOpen(true);
   };
 
-  const riskAlert = analyzeRisk(measurements);
+  const filteredMeasurements = measurements.filter(m => {
+    // Range filter
+    if (rangeFilter !== 'all') {
+      const days = rangeFilter === '7days' ? 7 : 30;
+      if (!isAfter(m.timestamp, subDays(new Date(), days))) return false;
+    }
+    // Period filter
+    if (periodFilter !== 'all') {
+      if (m.period !== periodFilter) return false;
+    }
+    return true;
+  });
+
+  const riskAlert = analyzeRisk(filteredMeasurements);
 
   const todaysMeasurements = measurements.filter(m => isToday(m.timestamp));
   const hasToday = todaysMeasurements.length > 0;
   const avgSysToday = hasToday ? Math.round(todaysMeasurements.reduce((acc, m) => acc + m.systolic, 0) / todaysMeasurements.length) : 0;
   const avgDiaToday = hasToday ? Math.round(todaysMeasurements.reduce((acc, m) => acc + m.diastolic, 0) / todaysMeasurements.length) : 0;
   
-  const hasMeasurements = measurements.length > 0;
-  const avgSysTotal = hasMeasurements ? Math.round(measurements.reduce((acc, m) => acc + m.systolic, 0) / measurements.length) : 0;
-  const avgDiaTotal = hasMeasurements ? Math.round(measurements.reduce((acc, m) => acc + m.diastolic, 0) / measurements.length) : 0;
+  const hasMeasurements = filteredMeasurements.length > 0;
+  const avgSysTotal = hasMeasurements ? Math.round(filteredMeasurements.reduce((acc, m) => acc + m.systolic, 0) / filteredMeasurements.length) : 0;
+  const avgDiaTotal = hasMeasurements ? Math.round(filteredMeasurements.reduce((acc, m) => acc + m.diastolic, 0) / filteredMeasurements.length) : 0;
   
-  const latestMeasurement = hasMeasurements ? measurements[0] : null;
+  const latestMeasurement = hasMeasurements ? filteredMeasurements[0] : null;
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 pb-32 bg-mesh">
@@ -222,6 +238,56 @@ function Dashboard() {
       </header>
 
       <main className="max-w-xl mx-auto px-6 pt-24 space-y-8">
+        {(activeTab === 'history' || activeTab === 'chart') && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+              <div className="flex bg-zinc-900 shadow-inner rounded-xl p-1 shrink-0">
+                {[
+                  { id: 'all', label: 'Todos', icon: Filter },
+                  { id: 'morning', label: 'Manhã', icon: Sun },
+                  { id: 'afternoon', label: 'Tarde', icon: Sunset },
+                  { id: 'night', label: 'Noite', icon: Moon }
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { vibrate(5); setPeriodFilter(p.id as any); }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black transition-all",
+                      periodFilter === p.id 
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+                        : "text-zinc-500 hover:text-zinc-300"
+                    )}
+                  >
+                    <p.icon className="w-3 h-3" />
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex bg-zinc-900 shadow-inner rounded-xl p-1 shrink-0">
+                {[
+                  { id: 'all', label: 'Tudo', icon: Calendar },
+                  { id: '7days', label: '7 Dias', icon: Calendar },
+                  { id: '30days', label: '30 Dias', icon: Calendar }
+                ].map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => { vibrate(5); setRangeFilter(r.id as any); }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-black transition-all",
+                      rangeFilter === r.id 
+                        ? "bg-zinc-100 text-black shadow-lg" 
+                        : "text-zinc-500 hover:text-zinc-300"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div 
@@ -366,7 +432,7 @@ function Dashboard() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <DashboardChart measurements={measurements} />
+              <DashboardChart measurements={filteredMeasurements} />
             </motion.div>
           )}
 
@@ -385,7 +451,7 @@ function Dashboard() {
                   <button onClick={() => { vibrate(); handleSharePDF(); }} className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/20"><Share2 className="w-5 h-5" /></button>
                 </div>
               </div>
-              <HistoryList measurements={measurements} onDelete={(id) => { vibrate([10, 5, 10]); handleDeleteMeasurement(id); }} />
+              <HistoryList measurements={filteredMeasurements} onDelete={(id) => { vibrate([10, 5, 10]); handleDeleteMeasurement(id); }} />
             </motion.div>
           )}
         </AnimatePresence>
