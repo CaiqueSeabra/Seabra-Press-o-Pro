@@ -59,7 +59,7 @@ export function InstallPWA() {
 
   if (showIosPrompt) {
     return (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
         <div className="bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 text-white p-5 rounded-3xl shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
           <button 
@@ -88,7 +88,7 @@ export function InstallPWA() {
   if (!supportsPWA) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 text-white p-5 rounded-3xl shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
         <button 
