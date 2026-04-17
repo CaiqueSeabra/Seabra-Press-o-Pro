@@ -3,49 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#18181b" />
-
-    <!-- MANIFEST -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-
-    <!-- ICONES -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="shortcut icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
-
-    <!-- PWA -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Seabra Pro">
+    <meta name="apple-mobile-web-app-title" content="Pressão Pro">
     <meta name="application-name" content="Seabra Pressão Pro">
     <meta name="format-detection" content="telephone=no">
-
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="canonical" href="https://seabra-pressao-pro.com" />
     <title>Seabra Pressão Pro</title>
   </head>
-
   <body>
     <div id="root"></div>
-
-    <!-- APP -->
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- 🚨 AQUI ESTÁ A CORREÇÃO -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('SW registrado:', reg.scope))
-            .catch(err => console.log('Erro SW:', err));
-        });
+        navigator.serviceWorker.register('/service-worker.js')
+      }
+    </script>
+    <script>
+      let deferredPrompt;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('PWA pronto para instalar');
+        // Opcional: Notificar o React que o app pode ser instalado
+        window.dispatchEvent(new CustomEvent('pwa-installable', { detail: true }));
+      });
+
+      // função manual para instalar
+      window.instalarApp = function() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(choice => {
+            console.log(choice.outcome);
+            deferredPrompt = null;
+            window.dispatchEvent(new CustomEvent('pwa-installable', { detail: false }));
+          });
+        } else {
+          console.log('O prompt de instalação ainda não está disponível.');
+        }
       }
     </script>
   </body>
 </html>
-<script>
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  e.prompt();
-});
-</script>
+

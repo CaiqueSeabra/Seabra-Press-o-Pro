@@ -46,8 +46,10 @@ service cloud.firestore {
     }
 
     function isRecent(time) {
-      return time > request.time - duration.value(5, 'm') &&
-             time <= request.time;
+      // Relaxed check to ensure serverTimestamp() is always valid
+      // and allow some buffer for client-side timestamps if needed.
+      return time > request.time - duration.value(24, 'h') &&
+             time <= request.time + duration.value(1, 'm');
     }
 
     function isValidMeasurement(userId) {

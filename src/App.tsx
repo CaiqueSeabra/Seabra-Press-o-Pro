@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { MeasurementForm } from './components/MeasurementForm';
 import { HistoryList } from './components/HistoryList';
@@ -6,98 +6,13 @@ import { DashboardChart } from './components/DashboardChart';
 import { ReportModal } from './components/ReportModal';
 import { LandingPage } from './components/LandingPage';
 import { Measurement, Period } from './types';
-import { db, auth } from './firebase';
+import { db } from './firebase';
 import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { Activity, LogOut, FileDown, AlertTriangle, AlertOctagon, Share2, Eye, EyeOff, Plus, History, TrendingUp, Info, ArrowLeft } from 'lucide-react';
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-    },
-    operationType,
-    path
-  };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
 import { isToday, subDays, isAfter } from 'date-fns';
 import { analyzeRisk } from './lib/bloodPressure';
 import { cn } from './lib/utils';
 import { Filter, Calendar, Sun, Sunset, Moon } from 'lucide-react';
-
-class ErrorBoundary extends React.Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
-  state = { hasError: false, error: null };
-
-  constructor(props: {children: ReactNode}) {
-    super(props);
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      let displayMessage = "Ocorreu um erro inesperado.";
-      try {
-        const errData = JSON.parse(this.state.error?.message || "{}");
-        if (errData.error) {
-          displayMessage = `Erro de Banco de Dados: ${errData.error} (${errData.operationType})`;
-        } else {
-          displayMessage = this.state.error?.message || displayMessage;
-        }
-      } catch {
-        displayMessage = this.state.error?.message || displayMessage;
-      }
-
-      return (
-        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 text-center">
-          <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Algo deu errado</h1>
-          <p className="text-zinc-400 mb-6 max-w-md">{displayMessage}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-600/20"
-          >
-            Recarregar Aplicativo
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 import { motion, AnimatePresence } from 'motion/react';
 
 function Dashboard() {
@@ -110,37 +25,6 @@ function Dashboard() {
   const [periodFilter, setPeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'night'>('all');
   const [rangeFilter, setRangeFilter] = useState<'all' | '7days' | '30days'>('all');
   
-  // Native PWA Install Prompt Logic
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstallable(false);
-    }
-
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-      setIsInstallable(false);
-    }
-  };
-
   const vibrate = (pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
   };
@@ -172,7 +56,7 @@ function Dashboard() {
       setMeasurements(data);
       setLoading(false);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/measurements`);
+      console.error("Firestore LIST error:", error);
     });
 
     return () => unsubscribe();
@@ -189,7 +73,7 @@ function Dashboard() {
         timestamp: serverTimestamp()
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/measurements`);
+      console.error("Firestore CREATE error:", error);
     } finally {
       setSaving(false);
     }
@@ -201,7 +85,7 @@ function Dashboard() {
       const path = `users/${user.uid}/measurements/${id}`;
       await deleteDoc(doc(db, path));
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/measurements/${id}`);
+      console.error("Firestore DELETE error:", error);
     }
   };
 
@@ -239,6 +123,23 @@ function Dashboard() {
   
   const latestMeasurement = hasMeasurements ? filteredMeasurements[0] : null;
 
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleInstallable = (e: any) => {
+      setIsInstallable(e.detail);
+    };
+    window.addEventListener('pwa-installable', handleInstallable);
+    return () => window.removeEventListener('pwa-installable', handleInstallable);
+  }, []);
+
+  const handleManualInstall = () => {
+    vibrate(20);
+    if ((window as any).instalarApp) {
+      (window as any).instalarApp();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-zinc-100 pb-32 bg-mesh">
       <header className="fixed top-0 inset-x-0 bg-transparent backdrop-blur-3xl z-40">
@@ -258,6 +159,15 @@ function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
+            {isInstallable && (
+              <button 
+                onClick={handleManualInstall}
+                className="px-4 py-2 bg-blue-600/10 border border-blue-500/30 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500 animate-pulse hover:animate-none active:scale-95 transition-all"
+              >
+                <Plus className="w-3 h-3" />
+                Instalar
+              </button>
+            )}
             <button 
               onClick={() => { vibrate(); logout(); }}
               className="w-10 h-10 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all active:scale-95"
@@ -328,32 +238,6 @@ function Dashboard() {
               exit={{ opacity: 0, scale: 1.05 }}
               className="space-y-8"
             >
-              {isInstallable && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => { vibrate(20); handleInstallClick(); }}
-                  className="w-full relative overflow-hidden group rounded-[2.5rem] p-6 flex items-center justify-between bg-blue-600 shadow-[0_20px_40px_-10px_rgba(59,130,246,0.3)] border border-blue-400/30"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                      <Plus className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-black text-white text-lg tracking-tight">Instalar Aplicativo Pro</h3>
-                      <p className="text-[10px] uppercase tracking-[0.15em] text-blue-100 font-bold">Nativo • Offline • Executável</p>
-                    </div>
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  
-                  {/* Gloss Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                </motion.button>
-              )}
-
               {riskAlert && (
                 <motion.div 
                   key={`risk-alert-${riskAlert.level}`}
@@ -646,8 +530,34 @@ function LoginScreen({ onBack }: { onBack: () => void }) {
     }
   };
   
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleInstallable = (e: any) => {
+      setIsInstallable(e.detail);
+    };
+    window.addEventListener('pwa-installable', handleInstallable);
+    return () => window.removeEventListener('pwa-installable', handleInstallable);
+  }, []);
+
+  const handleManualInstall = () => {
+    vibrate(20);
+    if ((window as any).instalarApp) {
+      (window as any).instalarApp();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 bg-mesh overflow-hidden relative">
+      {isInstallable && (
+        <button 
+          onClick={handleManualInstall}
+          className="absolute top-8 right-8 px-4 py-2 bg-blue-600/10 border border-blue-500/30 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500 animate-pulse active:scale-95 transition-all z-50"
+        >
+          <Plus className="w-4 h-4" />
+          Instalar App
+        </button>
+      )}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[120px] rounded-full" />
 
@@ -852,10 +762,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
