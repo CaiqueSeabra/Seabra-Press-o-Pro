@@ -13,7 +13,7 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.png'],
+        includeAssets: ['icon.png', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: {
           name: 'Seabra Pressão Pro',
           short_name: 'Pressão Pro',
@@ -21,6 +21,7 @@ export default defineConfig(({mode}) => {
           theme_color: '#18181b',
           background_color: '#09090b',
           display: 'standalone',
+          display_override: ['standalone', 'minimal-ui'],
           orientation: 'portrait',
           scope: '/',
           start_url: '/',

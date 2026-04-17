@@ -71,6 +71,14 @@ Este arquivo funciona como o diário de bordo técnico do projeto. Cada atualiza
   - **PWA Standard:** Revertida a lógica para os padrões recomendados pelo Google, garantindo que o Chrome mostre o botão oficial "Instalar Aplicativo".
   - **Correção de Ícones:** Manifest ajustado para garantir que a logo oficial apareça em vez de ícones genéricos.
 
+### [CP-009] - 17/04/2026 11:30
+- **Status:** ✅ LIMPEZA TOTAL E INSTALAÇÃO NATIVA (Zero Popup)
+- **Updates:**
+  - **Eliminação de Popups:** Removido qualquer vestígio de popups, barras ou modais de instalação customizados. O app agora é 100% limpo.
+  - **Restauração Padrão:** Revertido para a lógica nativa do navegador. O Google Chrome agora deve mostrar a opção oficial "Instalar Aplicativo" (WebAPK) baseada puramente nos critérios técnicos do manifest.
+  - **Configuração de Ouro:** Manifesto PWA ajustado com as configurações recomendadas pelo Google para garantir que seja reconhecido como um "Aplicativo Real" (Standalone) e não apenas um atalho.
+  - **Correção de Ativos:** Refinados os caminhos dos ícones no manifest para garantir reconhecimento instantâneo pelo Android.
+
 ---
 
 ## 🛠️ Regras de Blindagem (Protocolo de Segurança)

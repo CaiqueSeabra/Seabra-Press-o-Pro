@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { MeasurementForm } from './components/MeasurementForm';
 import { HistoryList } from './components/HistoryList';
 import { DashboardChart } from './components/DashboardChart';
-import { InstallPWA } from './components/InstallPWA';
 import { ReportModal } from './components/ReportModal';
 import { LandingPage } from './components/LandingPage';
 import { Measurement, Period } from './types';
@@ -779,7 +778,6 @@ function AppContent() {
     return (
       <>
         <Dashboard />
-        <InstallPWA />
       </>
     );
   }
@@ -791,7 +789,6 @@ function AppContent() {
       ) : (
         <LandingPage onGetStarted={() => setShowLogin(true)} />
       )}
-      <InstallPWA />
     </>
   );
 }
