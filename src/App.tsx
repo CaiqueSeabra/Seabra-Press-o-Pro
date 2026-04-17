@@ -500,9 +500,16 @@ function LoginScreen({ onBack }: { onBack: () => void }) {
   const [resetMessage, setResetMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('/icon.png');
 
   const vibrate = (pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
+  };
+
+  const handleLogoError = () => {
+    if (logoUrl !== "https://i.postimg.cc/9MZYCDPN/Seabra.jpg") {
+      setLogoUrl("https://i.postimg.cc/9MZYCDPN/Seabra.jpg");
+    }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -623,24 +630,10 @@ function LoginScreen({ onBack }: { onBack: () => void }) {
               className="relative w-48 h-48 rounded-[3.5rem] bg-zinc-900 border border-white/5 flex items-center justify-center mx-auto shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] overflow-hidden group"
             >
               <img 
-                src="/icon.png" 
+                src={logoUrl} 
                 alt="Logo Seabra Pressão Pro" 
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== "https://i.postimg.cc/9MZYCDPN/Seabra.jpg") {
-                    target.src = "https://i.postimg.cc/9MZYCDPN/Seabra.jpg";
-                  } else {
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent) {
-                      const fallback = document.createElement('div');
-                      fallback.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 to-black relative';
-                      fallback.innerHTML = '<div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>';
-                      parent.appendChild(fallback);
-                    }
-                  }
-                }}
+                onError={handleLogoError}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             </motion.div>

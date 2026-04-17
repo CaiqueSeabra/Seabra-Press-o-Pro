@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Activity, Camera, TrendingUp, ShieldCheck, Heart, ArrowRight, Share2, FileDown, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -8,6 +8,18 @@ interface Props {
 }
 
 export function LandingPage({ onGetStarted }: Props) {
+  const [photoUrl, setPhotoUrl] = useState(`https://raw.githubusercontent.com/CaiqueSeabra/Seabra-Press-o-Pro/main/public/foto-carlos.jpg?v=${new Date().getTime()}`);
+
+  const handlePhotoError = () => {
+    // Se o GitHub falhar, tenta o arquivo local (caso o sync tenha acontecido)
+    if (photoUrl.includes('githubusercontent')) {
+      setPhotoUrl("/foto-carlos.jpg");
+    } else if (photoUrl !== "https://ui-avatars.com/api/?name=Carlos+Seabra&background=0D8ABC&color=fff&size=128") {
+      // Por último, avatar padrão
+      setPhotoUrl("https://ui-avatars.com/api/?name=Carlos+Seabra&background=0D8ABC&color=fff&size=128");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-blue-500/30">
       {/* Background gradients */}
@@ -167,20 +179,11 @@ export function LandingPage({ onGetStarted }: Props) {
                 <div className="flex items-center gap-3 mt-4">
                   <div className="w-12 h-12 rounded-full bg-zinc-800 overflow-hidden border-2 border-blue-500/30">
                     <img 
-                      src="/foto-carlos.jpg.png" 
+                      src={photoUrl} 
                       alt="Carlos Seabra" 
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        if (img.src.endsWith('.jpg.png')) {
-                          img.src = "/foto-carlos.jpg";
-                        } else if (img.src.endsWith('.jpg')) {
-                          img.src = "/foto-carlos.png";
-                        } else {
-                          img.src = "https://ui-avatars.com/api/?name=Carlos+Seabra&background=0D8ABC&color=fff";
-                        }
-                      }}
+                      onError={handlePhotoError}
                     />
                   </div>
                   <div>

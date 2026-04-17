@@ -44,11 +44,11 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
       if (data.pulse) setPulse(data.pulse.toString());
       
       if (!data.systolic && !data.diastolic) {
-        setErrorMsg("Não encontramos números de pressão na imagem. Verifique a iluminação e tente uma foto bem de frente.");
+        setErrorMsg("Não conseguimos ler os números. 🩺 Dica: Tente tirar a foto bem de frente para o monitor, em um local bem iluminado e sem reflexos no visor.");
       }
     } catch (error: any) {
       console.error("Extraction error:", error);
-      setErrorMsg(`Erro: ${error.message || "Não foi possível extrair os dados da imagem. Tente novamente."}`);
+      setErrorMsg("Ocorreu um problema na leitura da foto. 💡 Verifique sua conexão ou tente novamente com uma foto mais nítida.");
     } finally {
       setIsScanning(false);
       if (cameraInputRef.current) cameraInputRef.current.value = '';
