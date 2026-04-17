@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Share, X, PlusSquare } from 'lucide-react';
+import { Download, Share, X, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -11,111 +12,89 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPWA() {
-  const [supportsPWA, setSupportsPWA] = useState(false);
   const [promptInstall, setPromptInstall] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [showIosPrompt, setShowIosPrompt] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                      (navigator as any).standalone === true;
 
-    if (isStandalone) {
+    setIsIos(ios);
+    if (standalone) {
       setIsInstalled(true);
-      return;
-    }
-
-    if (isIos) {
-      setShowIosPrompt(true);
+    } else {
+      // Show after a short delay to not annoy immediately
+      setTimeout(() => setIsVisible(true), 3000);
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setSupportsPWA(true);
       setPromptInstall(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-
-    window.addEventListener('appinstalled', () => {
-      setIsInstalled(true);
-      setSupportsPWA(false);
-    });
+    window.addEventListener('appinstalled', () => setIsInstalled(true));
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const onInstallClick = async () => {
     if (!promptInstall) return;
-    promptInstall.prompt();
+    await promptInstall.prompt();
     const { outcome } = await promptInstall.userChoice;
     if (outcome === 'accepted') {
-      setSupportsPWA(false);
+      setIsInstalled(true);
     }
   };
 
-  if (isInstalled || isDismissed) return null;
-
-  if (showIosPrompt) {
-    return (
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 text-white p-5 rounded-3xl shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
-          <button 
-            onClick={() => setIsDismissed(true)}
-            className="absolute top-3 right-3 text-zinc-500 hover:text-white p-1"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center shrink-0">
-              <PlusSquare className="w-6 h-6 text-blue-500" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm">Instalar no iPhone</h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Toque no ícone de <Share className="w-3 h-3 inline mx-0.5" /> <strong>Compartilhar</strong> e depois em <strong>"Adicionar à Tela de Início"</strong>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!supportsPWA) return null;
+  if (isInstalled || !isVisible) return null;
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 text-white p-5 rounded-3xl shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
-        <button 
-          onClick={() => setIsDismissed(true)}
-          className="absolute top-3 right-3 text-zinc-500 hover:text-white p-1"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center shrink-0">
-              <Download className="w-6 h-6 text-blue-500" />
+    <AnimatePresence>
+      <motion.div 
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        className="fixed bottom-6 left-4 right-4 z-50 pointer-events-none"
+      >
+        <div className="max-w-md mx-auto pointer-events-auto">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl p-4 flex items-center gap-4 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+            
+            <div className="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center shrink-0 shadow-lg overflow-hidden">
+              <img src="/icon.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm">Instalar App</span>
-              <span className="text-xs text-zinc-400">Acesso rápido e offline</span>
+
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold text-white truncate">Seabra Pressão Pro</h4>
+              <p className="text-[10px] text-zinc-400 font-medium leading-tight">
+                {isIos ? 'Toque no ícone de compartilhar e "Adicionar à Tela de Início"' : 'Acesse como um aplicativo real'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {promptInstall && (
+                <button
+                  onClick={onInstallClick}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-blue-500 active:scale-95 transition-all flex items-center gap-2"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  INSTALAR
+                </button>
+              )}
+              <button 
+                onClick={() => setIsVisible(false)}
+                className="p-2 text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <button
-            onClick={onInstallClick}
-            className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl font-bold text-sm hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
-          >
-            Instalar
-          </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

@@ -13,10 +13,11 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        includeAssets: ['icon.png'],
         manifest: {
           name: 'Seabra Pressão Pro',
           short_name: 'Pressão Pro',
-          description: 'Controle de Pressão Arterial',
+          description: 'Controle de Pressão Arterial Profissional',
           theme_color: '#18181b',
           background_color: '#09090b',
           display: 'standalone',
@@ -27,18 +28,26 @@ export default defineConfig(({mode}) => {
             {
               src: 'icon.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
             },
             {
               src: 'icon.png',
-              sizes: '512x512',
-              type: 'image/png'
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
             },
             {
               src: 'icon.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable'
+              purpose: 'any'
+            },
+            {
+              src: 'icon.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }

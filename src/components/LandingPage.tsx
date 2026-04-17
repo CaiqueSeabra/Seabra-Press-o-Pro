@@ -11,8 +11,13 @@ export function LandingPage({ onGetStarted }: Props) {
   const [photoUrl, setPhotoUrl] = useState(`https://raw.githubusercontent.com/CaiqueSeabra/Seabra-Press-o-Pro/main/public/foto-carlos.jpg?v=${new Date().getTime()}`);
 
   const handlePhotoError = () => {
-    // Se o GitHub falhar, tenta o arquivo local (caso o sync tenha acontecido)
+    // Sequência de blindagem (Fallbacks sucessivos):
+    // 1. GitHub (Principal) -> 2. Postimg (Altamente confiável) -> 3. Local -> 4. Avatar
     if (photoUrl.includes('githubusercontent')) {
+      // Se falhar o GitHub, tenta o Postimg que sabemos que funciona
+      setPhotoUrl("https://i.postimg.cc/9MZYCDPN/Seabra.jpg");
+    } else if (photoUrl.includes('postimg.cc')) {
+      // Se falhar o Postimg, tenta o arquivo local
       setPhotoUrl("/foto-carlos.jpg");
     } else if (photoUrl !== "https://ui-avatars.com/api/?name=Carlos+Seabra&background=0D8ABC&color=fff&size=128") {
       // Por último, avatar padrão
