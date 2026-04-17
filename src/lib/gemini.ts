@@ -5,10 +5,15 @@ let aiClient: GoogleGenAI | null = null;
 
 function getAiClient() {
   if (!aiClient) {
-    // Check for PHOTO_API_KEY first (non-reserved) then fallback to GEMINI_API_KEY
-    const apiKey = process.env.PHOTO_API_KEY || process.env.GEMINI_API_KEY;
+    // Priority: GEMINI_API_KEY (provided by AI Studio) > PHOTO_API_KEY (optional override)
+    const apiKey = process.env.GEMINI_API_KEY || process.env.PHOTO_API_KEY;
+    
+    // Fallback if both are missing
     if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-      throw new Error("Configuração necessária: Vá em 'Settings' -> 'Secrets' no AI Studio e adicione a chave com o nome PHOTO_API_KEY.");
+      console.warn("Nenhuma chave AI detectada. Verifique as configurações (Settings) do AI Studio.");
+      // We don't throw here to avoid the crashing state until the feature is actually called.
+      // However, if we're in AI Studio, GEMINI_API_KEY should exist.
+      throw new Error("Configuração necessária: Vá em 'Settings' -> 'Secrets' no AI Studio e adicione a chave GEMINI_API_KEY.");
     }
     aiClient = new GoogleGenAI({ apiKey });
   }

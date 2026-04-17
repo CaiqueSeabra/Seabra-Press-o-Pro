@@ -13,42 +13,72 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        injectRegister: 'script',
         includeAssets: ['icon.png', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/i\.postimg\.cc\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'external-images',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 30 // 30 Days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            }
+          ]
+        },
         manifest: {
+          id: 'seabra-pressao-pro-stable-v1',
           name: 'Seabra Pressão Pro',
           short_name: 'Pressão Pro',
-          description: 'Controle de Pressão Arterial Profissional',
+          description: 'Acompanhamento profissional de pressão arterial com tecnologia Seabra.',
           theme_color: '#18181b',
           background_color: '#09090b',
           display: 'standalone',
-          display_override: ['standalone', 'minimal-ui'],
           orientation: 'portrait',
           scope: '/',
           start_url: '/',
+          categories: ['medical', 'health', 'fitness'],
+          prefer_related_applications: false,
           icons: [
             {
-              src: 'icon.png',
+              src: '/icon.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: 'icon.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'maskable'
-            },
-            {
-              src: 'icon.png',
+              src: '/icon.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: 'icon.png',
+              src: '/icon.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable'
+            }
+          ],
+          screenshots: [
+            {
+              src: 'https://i.postimg.cc/9MZYCDPN/Seabra.jpg',
+              sizes: '1024x1024',
+              type: 'image/jpeg',
+              form_factor: 'narrow'
+            },
+            {
+              src: 'https://i.postimg.cc/9MZYCDPN/Seabra.jpg',
+              sizes: '1024x1024',
+              type: 'image/jpeg',
+              form_factor: 'wide'
             }
           ]
         }
@@ -56,7 +86,6 @@ export default defineConfig(({mode}) => {
     ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-      'process.env.PHOTO_API_KEY': JSON.stringify(env.PHOTO_API_KEY || process.env.PHOTO_API_KEY),
     },
     resolve: {
       alias: {

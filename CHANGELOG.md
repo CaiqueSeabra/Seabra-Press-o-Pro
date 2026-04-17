@@ -79,6 +79,36 @@ Este arquivo funciona como o diário de bordo técnico do projeto. Cada atualiza
   - **Configuração de Ouro:** Manifesto PWA ajustado com as configurações recomendadas pelo Google para garantir que seja reconhecido como um "Aplicativo Real" (Standalone) e não apenas um atalho.
   - **Correção de Ativos:** Refinados os caminhos dos ícones no manifest para garantir reconhecimento instantâneo pelo Android.
 
+### [CP-010] - 17/04/2026 12:00
+- **Status:** ✅ REINSTALAÇÃO PREMIUM (Foco APK Nativo)
+- **Updates:**
+  - **Volta ao Modal:** Restaurado o modal de alto impacto com a logo do app, focado em facilitar a instalação para usuários leigos.
+  - **Foco em WebAPK:** Manifesto e lógica otimizados para forçar o diálogo nativo "Instalar Aplicativo" do Android em vez de apenas um atalho.
+  - **Identificador Único:** Adicionado `id` ao manifesto para garantir que o Android reconheça o app como uma entidade única e estável para instalação nativa.
+  - **UX Direta:** Removidas animações de carregamento desnecessárias, indo direto para o botão "INSTALAR AGORA".
+
+### [CP-011] - 17/04/2026 12:15
+- **Status:** ✅ MODAL RESTAURADO E CORRIGIDO (APK Ready)
+- **Updates:**
+  - **Correção de Build:** Resolvido o erro de JSX que impedia o funcionamento do modal premium.
+  - **Experiência APK:** O modal agora aparece corretamente após o login, convidando o usuário a instalar o app de forma nativa e rápida.
+  - **UI Refinada:** Mantido o visual premium com glow azul e botões de impacto para facilitar a adoção por usuários finais.
+
+### [CP-012] - 17/04/2026 12:30
+- **Status:** ✅ PADRÃO OURO DE INSTALAÇÃO (WebAPK Gold)
+- **Updates:**
+  - **Screenshots:** Adicionados screenshots do app ao manifesto (requisito para a 'Rich Install UI' do Chrome Android).
+  - **Categorias & Descrição:** Refinadas as metatags para classificar o app como 'Saúde e Medicina'.
+  - **Registro Inline:** Configurado o registro do Service Worker para ser imediato (inline), evitando atrasos na detecção de instalação.
+  - **Preferência Nativa:** Configurado `prefer_related_applications: false` para forçar o navegador a priorizar a instalação do PWA como aplicativo, não apenas como atalho.
+
+### [CP-013] - 17/04/2026 13:00
+- **Status:** ✅ CONEXÃO BLINDADA (Auto-Resolve)
+- **Updates:**
+  - **Fim dos Popups:** Removidas as variáveis de ambiente redundantes do `.env.example`. Isso faz com que o Google Studio pare de pedir as chaves manualmente, já que o app as lê automaticamente do arquivo interno.
+  - **Auto-Configuração:** O app agora usa o `firebase-applet-config.json` como fonte única de verdade, garantindo que ele "apenas funcione" sem intervenção do usuário.
+  - **Teste de Saúde:** Adicionado um teste de conexão silencioso no carregamento para garantir que o banco de dados está respondendo.
+
 ---
 
 ## 🛠️ Regras de Blindagem (Protocolo de Segurança)

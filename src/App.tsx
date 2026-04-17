@@ -109,6 +109,37 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'chart'>('dashboard');
   const [periodFilter, setPeriodFilter] = useState<'all' | 'morning' | 'afternoon' | 'night'>('all');
   const [rangeFilter, setRangeFilter] = useState<'all' | '7days' | '30days'>('all');
+  
+  // Native PWA Install Prompt Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    }
+  };
 
   const vibrate = (pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
@@ -297,6 +328,32 @@ function Dashboard() {
               exit={{ opacity: 0, scale: 1.05 }}
               className="space-y-8"
             >
+              {isInstallable && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { vibrate(20); handleInstallClick(); }}
+                  className="w-full relative overflow-hidden group rounded-[2.5rem] p-6 flex items-center justify-between bg-blue-600 shadow-[0_20px_40px_-10px_rgba(59,130,246,0.3)] border border-blue-400/30"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                      <Plus className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-black text-white text-lg tracking-tight">Instalar Aplicativo Pro</h3>
+                      <p className="text-[10px] uppercase tracking-[0.15em] text-blue-100 font-bold">Nativo • Offline • Executável</p>
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  
+                  {/* Gloss Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                </motion.button>
+              )}
+
               {riskAlert && (
                 <motion.div 
                   key={`risk-alert-${riskAlert.level}`}
