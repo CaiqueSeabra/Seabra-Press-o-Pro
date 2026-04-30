@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "Measurement": {
+      "title": "Measurement",
+      "description": "A blood pressure measurement record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this record" },
+        "period": { "type": "string", "enum": ["morning", "afternoon", "night"], "description": "The time of day the measurement was taken" },
+        "systolic": { "type": "number", "description": "Systolic blood pressure (top number)" },
+        "diastolic": { "type": "number", "description": "Diastolic blood pressure (bottom number)" },
+        "pulse": { "type": "number", "description": "Heart rate in beats per minute" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Server-side timestamp of the record" }
+      },
+      "required": ["userId", "period", "systolic", "diastolic", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/measurements/{measurementId}": {
+      "schema": "Measurement",
+      "description": "User-specific blood pressure measurements"
+    }
+  }
+}
