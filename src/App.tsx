@@ -78,6 +78,20 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         ...data,
       });
       if (error) throw error;
+      
+      // Fetch newest data
+      const { data: newData } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('userId', user.id)
+        .order('timestamp', { ascending: false });
+      
+      if (newData) {
+        setMeasurements(newData.map(item => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      }
     } catch (error: any) {
       if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
         alert("Erro de Permissão (403) ao salvar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
@@ -90,14 +104,51 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
 
   const handleDeleteMeasurement = async (id: string) => {
     if (!user) return;
+    
+    // Optimistic UI update or just fast local update
+    setMeasurements(prev => prev.filter(m => m.id !== id));
+
     try {
-      const { error } = await supabase.from('measurements').delete().eq('id', id);
+      const { data, error } = await supabase.from('measurements').delete().eq('id', id).select();
       if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        alert("Erro: Nenhuma medição foi apagada. Verifique se o RLS (Permissões de Segurança) para DELETE está configurado corretamente no banco de dados.");
+        
+        // Restore local state since it wasn't deleted
+        const { data: refetchData } = await supabase
+          .from('measurements')
+          .select('*')
+          .eq('userId', user.id)
+          .order('timestamp', { ascending: false });
+        if (refetchData) {
+          setMeasurements(refetchData.map(item => ({
+            ...item,
+            timestamp: new Date(item.timestamp)
+          })));
+        }
+      }
     } catch (error: any) {
+      // Revert if error
       if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
         alert("Erro de Permissão (403) ao deletar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
+      } else {
+        alert(`Erro ao deletar: ${error?.message || 'Erro desconhecido'}`);
       }
       console.error("Supabase DELETE error:", error);
+      // Wait, to revert we'd need the original record... simpler to just refetch
+      const { data } = await supabase
+        .from('measurements')
+        .select('*')
+        .eq('userId', user.id)
+        .order('timestamp', { ascending: false });
+      
+      if (data) {
+        setMeasurements(data.map(item => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      }
     }
   };
 
