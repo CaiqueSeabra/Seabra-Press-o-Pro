@@ -38,6 +38,10 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         .order('timestamp', { ascending: false });
 
       if (error) {
+        if (error.code === '42501' || error.message?.includes('403') || error.message?.includes('RLS') || error.message?.includes('violates row-level security')) {
+          console.error("ERRO DE PERMISSÃO SUPABASE: Você precisa configurar as permissões (RLS) da tabela 'measurements' no seu banco de dados Supabase.");
+          alert("Ocorreu um erro de permissão (403) no banco de dados. Por favor, acesse seu painel do Supabase, vá em 'SQL Editor' e rode o código que está no arquivo 'supabase-setup.sql' do projeto para habilitar as políticas de segurança (RLS).");
+        }
         console.error("Supabase SELECT error:", error);
       } else if (data) {
         setMeasurements(data.map(item => ({
@@ -74,7 +78,10 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         ...data,
       });
       if (error) throw error;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
+        alert("Erro de Permissão (403) ao salvar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
+      }
       console.error("Supabase INSERT error:", error);
     } finally {
       setSaving(false);
@@ -86,7 +93,10 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
     try {
       const { error } = await supabase.from('measurements').delete().eq('id', id);
       if (error) throw error;
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
+        alert("Erro de Permissão (403) ao deletar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
+      }
       console.error("Supabase DELETE error:", error);
     }
   };
