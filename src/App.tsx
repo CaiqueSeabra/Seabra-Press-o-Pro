@@ -489,6 +489,8 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
         errorMsg = 'Este email já está cadastrado. Tente entrar em "Já tenho conta" ao invés de cadastrar.';
       } else if (errorMsg.includes('Password should be')) {
         errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
+      } else if (errorMsg.includes('Email signups are disabled')) {
+        errorMsg = 'O cadastro por e-mail está desativado no seu painel do Supabase. Acesse Authentication > Providers > Email e ative "Enable Email Signup".';
       }
       
       setError(errorMsg);
