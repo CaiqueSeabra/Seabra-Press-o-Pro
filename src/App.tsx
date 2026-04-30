@@ -458,23 +458,39 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
     const cleanEmail = email.trim();
     
     try {
+      const authPromise = isRegistering 
+        ? signUpWithEmail(cleanEmail, password)
+        : signInWithEmail(cleanEmail, password);
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 15000)
+      );
+
+      await Promise.race([authPromise, timeoutPromise]);
+
       if (isRegistering) {
-        await signUpWithEmail(cleanEmail, password);
+        setResetMessage('Sua conta foi criada! Verifique seu app se precisa confirmar o email, ou faça seu primeiro login.');
+        setIsRegistering(false); // Volta para login para facilitar o fluxo
+        setPassword('');
       } else {
-        await signInWithEmail(cleanEmail, password);
+        // SignIn bem-sucedido, AuthContext irá redirecionar
       }
     } catch (err: any) {
       console.error("Auth Error:", err);
       let errorMsg = err.message || 'Ocorreu um erro ao fazer login/cadastro.';
-      if (errorMsg === 'Invalid login credentials') {
+      
+      if (errorMsg === 'TIMEOUT') {
+        errorMsg = 'O servidor demorou muito para responder. Verifique a internet e tente novamente.';
+      } else if (errorMsg === 'Invalid login credentials') {
         errorMsg = 'Email/senha incorretos, ou e-mail ainda não confirmado. Verifique suas credenciais ou crie uma conta.';
       } else if (errorMsg === 'Email not confirmed') {
         errorMsg = 'Por favor, confirme seu email no link que enviamos.';
-      } else if (errorMsg === 'User already registered') {
-        errorMsg = 'Este email já está cadastrado. Clique em "Voltar para o Login".';
+      } else if (errorMsg === 'User already registered' || errorMsg.includes('already registered')) {
+        errorMsg = 'Este email já está cadastrado. Tente entrar em "Já tenho conta" ao invés de cadastrar.';
       } else if (errorMsg.includes('Password should be')) {
         errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
       }
+      
       setError(errorMsg);
     } finally {
       setLoading(false);
