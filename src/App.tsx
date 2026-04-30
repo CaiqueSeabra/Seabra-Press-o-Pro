@@ -457,7 +457,7 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
       console.error("Auth Error:", err);
       let errorMsg = err.message || 'Ocorreu um erro ao fazer login/cadastro.';
       if (errorMsg === 'Invalid login credentials') {
-        errorMsg = 'Email ou senha incorretos. Se não possui conta, clique em "Cadastre-se com E-mail" abaixo.';
+        errorMsg = 'Email/senha incorretos, ou e-mail ainda não confirmado. Verifique suas credenciais ou crie uma conta.';
       } else if (errorMsg === 'Email not confirmed') {
         errorMsg = 'Por favor, confirme seu email no link que enviamos.';
       } else if (errorMsg === 'User already registered') {
