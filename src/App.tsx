@@ -150,15 +150,6 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
           </div>
           
           <div className="flex items-center gap-3">
-            {isInstallable && (
-              <button 
-                onClick={onInstall}
-                className="px-4 py-2 bg-blue-600/10 border border-blue-500/30 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500 animate-pulse hover:animate-none active:scale-95 transition-all"
-              >
-                <Plus className="w-3 h-3" />
-                Instalar
-              </button>
-            )}
             <button 
               onClick={() => { vibrate(); logout(); }}
               className="w-10 h-10 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all active:scale-95"
@@ -374,33 +365,6 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         />
       </main>
 
-      {/* Installation FAB */}
-      <div className="fixed bottom-24 right-6 flex flex-col gap-3 items-end z-30">
-        {(isInstallable || isWebView) && (
-          <button
-            onClick={onInstall}
-            className={cn(
-              "p-4 rounded-full shadow-2xl flex items-center gap-2 active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest",
-              isWebView 
-                ? "bg-amber-500/10 border border-amber-500/30 text-amber-500 backdrop-blur-md"
-                : "bg-blue-600/10 border border-blue-500/30 text-blue-500 backdrop-blur-md animate-pulse hover:animate-none"
-            )}
-          >
-            {isWebView ? (
-              <>
-                <Info className="w-4 h-4" />
-                <span>Instalar? (Abrir no Chrome)</span>
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" />
-                <span>Instalar APP</span>
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
       {/* Navigation Bar */}
       <nav className="fixed bottom-0 inset-x-0 glass-panel pb-safe z-40">
         <div className="max-w-xl mx-auto px-6 h-20 flex items-center justify-around">
@@ -505,9 +469,18 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
     setLoading(true);
     try {
       await signInWithGoogle();
+      // Mostramos uma mensagem amigável caso o usuário não perceba que uma nova aba abriu
+      setError('A tela do Google foi aberta em uma nova janela. Faça o login lá!');
+      
+      // Remove a mensagem depois de 10 segundos
+      setTimeout(() => setError(''), 10000);
     } catch (err: any) {
       console.error("Google Auth Error:", err);
-      setError(`Erro Google: ${err.message || 'Falha na conexão.'}`);
+      let errorMsg = err.message || 'Falha na conexão.';
+      if (errorMsg.includes('popup')) {
+        errorMsg = 'O bloqueador de popups do seu navegador impediu a tela do Google. Por favor, permita popups neste site.';
+      }
+      setError(`Erro Google: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

@@ -34,15 +34,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Abre a aba/janela imediatamente para bypassar o bloqueio de popups (especialmente iOS/Safari)
+      const authWindow = window.open('', '_blank', 'width=500,height=600,noopener,noreferrer');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
           queryParams: {
             prompt: 'select_account'
           }
         }
       });
-      if (error) throw error;
+      if (error) {
+        authWindow?.close();
+        throw error;
+      }
+      if (data?.url) {
+        if (authWindow) {
+          authWindow.location.href = data.url;
+        } else {
+          // Fallback caso o popup tenha sido bloqueado
+          window.location.href = data.url;
+        }
+      }
     } catch (error: any) {
       console.error("Error signing in with Google", error);
       throw error;

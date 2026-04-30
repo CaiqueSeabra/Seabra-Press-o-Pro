@@ -50,15 +50,6 @@ export function LandingPage({ onGetStarted, isInstallable, onInstall, isWebView 
                 ⚠️ Abrir no Chrome para Instalar
               </div>
             )}
-            {isInstallable && (
-              <button 
-                onClick={onInstall}
-                className="hidden sm:flex items-center gap-2 bg-blue-600/10 border border-blue-500/30 text-blue-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600/20 transition-all animate-pulse hover:animate-none active:scale-95"
-              >
-                <Plus className="w-3 h-3" />
-                Instalar App
-              </button>
-            )}
             <button 
               onClick={onGetStarted}
               className="hidden sm:flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-all shadow-xl shadow-white/5 active:scale-95"
@@ -87,24 +78,6 @@ export function LandingPage({ onGetStarted, isInstallable, onInstall, isWebView 
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 pt-4">
-            <button 
-              onClick={onInstall}
-              className={cn(
-                "w-full max-w-md flex flex-col items-center justify-center gap-1 px-10 py-6 rounded-3xl font-black text-xl active:scale-95 transition-all relative overflow-hidden group shadow-2xl",
-                isInstallable 
-                  ? "bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-green-600/40 animate-pulse" 
-                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-blue-600/40"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Plus className={cn("w-6 h-6", isInstallable && "animate-spin-slow")} />
-                <span>{isInstallable ? 'INSTALAÇÃO LIBERADA' : 'INSTALAR AGORA'}</span>
-              </div>
-              <span className="text-[10px] opacity-70 font-black tracking-widest">
-                {isInstallable ? 'CLIQUE PARA BAIXAR O APP AGORA' : 'CLIQUE PARA PREPARAR O DOWNLOAD'}
-              </span>
-              <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-[-20deg]" />
-            </button>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
               <button 
