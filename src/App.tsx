@@ -38,10 +38,6 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         .order('timestamp', { ascending: false });
 
       if (error) {
-        if (error.code === '42501' || error.message?.includes('403') || error.message?.includes('RLS') || error.message?.includes('violates row-level security')) {
-          console.error("ERRO DE PERMISSÃO SUPABASE: Você precisa configurar as permissões (RLS) da tabela 'measurements' no seu banco de dados Supabase.");
-          alert("Ocorreu um erro de permissão (403) no banco de dados. Por favor, acesse seu painel do Supabase, vá em 'SQL Editor' e rode o código que está no arquivo 'supabase-setup.sql' do projeto para habilitar as políticas de segurança (RLS).");
-        }
         console.error("Supabase SELECT error:", error);
       } else if (data) {
         setMeasurements(data.map(item => ({
@@ -78,24 +74,7 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         ...data,
       });
       if (error) throw error;
-      
-      // Fetch newest data
-      const { data: newData } = await supabase
-        .from('measurements')
-        .select('*')
-        .eq('userId', user.id)
-        .order('timestamp', { ascending: false });
-      
-      if (newData) {
-        setMeasurements(newData.map(item => ({
-          ...item,
-          timestamp: new Date(item.timestamp)
-        })));
-      }
-    } catch (error: any) {
-      if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
-        alert("Erro de Permissão (403) ao salvar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
-      }
+    } catch (error) {
       console.error("Supabase INSERT error:", error);
     } finally {
       setSaving(false);
@@ -104,51 +83,11 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
 
   const handleDeleteMeasurement = async (id: string) => {
     if (!user) return;
-    
-    // Optimistic UI update or just fast local update
-    setMeasurements(prev => prev.filter(m => m.id !== id));
-
     try {
-      const { data, error } = await supabase.from('measurements').delete().eq('id', id).select();
+      const { error } = await supabase.from('measurements').delete().eq('id', id);
       if (error) throw error;
-      
-      if (!data || data.length === 0) {
-        alert("Erro: Nenhuma medição foi apagada. Verifique se o RLS (Permissões de Segurança) para DELETE está configurado corretamente no banco de dados.");
-        
-        // Restore local state since it wasn't deleted
-        const { data: refetchData } = await supabase
-          .from('measurements')
-          .select('*')
-          .eq('userId', user.id)
-          .order('timestamp', { ascending: false });
-        if (refetchData) {
-          setMeasurements(refetchData.map(item => ({
-            ...item,
-            timestamp: new Date(item.timestamp)
-          })));
-        }
-      }
-    } catch (error: any) {
-      // Revert if error
-      if (error?.code === '42501' || error?.message?.includes('403') || error?.message?.includes('RLS')) {
-        alert("Erro de Permissão (403) ao deletar! Você precisa rodar o script SQL 'supabase-setup.sql' no SQL Editor do Supabase.");
-      } else {
-        alert(`Erro ao deletar: ${error?.message || 'Erro desconhecido'}`);
-      }
+    } catch (error) {
       console.error("Supabase DELETE error:", error);
-      // Wait, to revert we'd need the original record... simpler to just refetch
-      const { data } = await supabase
-        .from('measurements')
-        .select('*')
-        .eq('userId', user.id)
-        .order('timestamp', { ascending: false });
-      
-      if (data) {
-        setMeasurements(data.map(item => ({
-          ...item,
-          timestamp: new Date(item.timestamp)
-        })));
-      }
     }
   };
 
@@ -201,6 +140,15 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
           </div>
           
           <div className="flex items-center gap-3">
+            {isInstallable && (
+              <button 
+                onClick={onInstall}
+                className="px-4 py-2 bg-blue-600/10 border border-blue-500/30 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-500 animate-pulse hover:animate-none active:scale-95 transition-all"
+              >
+                <Plus className="w-3 h-3" />
+                Instalar
+              </button>
+            )}
             <button 
               onClick={() => { vibrate(); logout(); }}
               className="w-10 h-10 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all active:scale-95"
@@ -416,6 +364,33 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
         />
       </main>
 
+      {/* Installation FAB */}
+      <div className="fixed bottom-24 right-6 flex flex-col gap-3 items-end z-30">
+        {(isInstallable || isWebView) && (
+          <button
+            onClick={onInstall}
+            className={cn(
+              "p-4 rounded-full shadow-2xl flex items-center gap-2 active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest",
+              isWebView 
+                ? "bg-amber-500/10 border border-amber-500/30 text-amber-500 backdrop-blur-md"
+                : "bg-blue-600/10 border border-blue-500/30 text-blue-500 backdrop-blur-md animate-pulse hover:animate-none"
+            )}
+          >
+            {isWebView ? (
+              <>
+                <Info className="w-4 h-4" />
+                <span>Instalar? (Abrir no Chrome)</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                <span>Instalar APP</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
       {/* Navigation Bar */}
       <nav className="fixed bottom-0 inset-x-0 glass-panel pb-safe z-40">
         <div className="max-w-xl mx-auto px-6 h-20 flex items-center justify-around">
@@ -443,7 +418,7 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
 }
 
 function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: () => void, isInstallable: boolean, onInstall: () => void, isWebView: boolean }) {
-  const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
@@ -469,46 +444,29 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
     setError('');
     setResetMessage('');
     setLoading(true);
-    
-    const cleanEmail = email.trim();
-    
     try {
-      const authPromise = isRegistering 
-        ? signUpWithEmail(cleanEmail, password)
-        : signInWithEmail(cleanEmail, password);
-        
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('TIMEOUT')), 15000)
-      );
-
-      await Promise.race([authPromise, timeoutPromise]);
-
       if (isRegistering) {
-        setResetMessage('Sua conta foi criada! Verifique seu app se precisa confirmar o email, ou faça seu primeiro login.');
-        setIsRegistering(false); // Volta para login para facilitar o fluxo
-        setPassword('');
+        await signUpWithEmail(email, password);
       } else {
-        // SignIn bem-sucedido, AuthContext irá redirecionar
+        await signInWithEmail(email, password);
       }
     } catch (err: any) {
       console.error("Auth Error:", err);
-      let errorMsg = err.message || 'Ocorreu um erro ao fazer login/cadastro.';
-      
-      if (errorMsg === 'TIMEOUT') {
-        errorMsg = 'O servidor demorou muito para responder. Verifique a internet e tente novamente.';
-      } else if (errorMsg === 'Invalid login credentials') {
-        errorMsg = 'Email/senha incorretos, ou e-mail ainda não confirmado. Verifique suas credenciais ou crie uma conta.';
-      } else if (errorMsg === 'Email not confirmed') {
-        errorMsg = 'Por favor, confirme seu email no link que enviamos.';
-      } else if (errorMsg === 'User already registered' || errorMsg.includes('already registered')) {
-        errorMsg = 'Este email já está cadastrado. Tente entrar em "Já tenho conta" ao invés de cadastrar.';
-      } else if (errorMsg.includes('Password should be')) {
-        errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
-      } else if (errorMsg.includes('Email signups are disabled')) {
-        errorMsg = 'O cadastro por e-mail está desativado no seu painel do Supabase. Acesse Authentication > Providers > Email e ative "Enable Email Signup".';
-      }
-      
-      setError(errorMsg);
+      setError(`Erro: ${err.message || 'Ocorreu um erro ao fazer login/cadastro.'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    vibrate(10);
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google Auth Error:", err);
+      setError(`Erro Google: ${err.message || 'Falha na conexão.'}`);
     } finally {
       setLoading(false);
     }
@@ -516,8 +474,7 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
 
   const handleResetPassword = async () => {
     vibrate(5);
-    const cleanEmail = email.trim();
-    if (!cleanEmail) {
+    if (!email) {
       setError('Digite seu email no campo acima para redefinir a senha.');
       return;
     }
@@ -525,7 +482,7 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
       setLoading(true);
       setError('');
       setResetMessage('');
-      await resetPassword(cleanEmail);
+      await resetPassword(email);
       setResetMessage('Email de redefinição enviado! Verifique sua caixa de entrada.');
     } catch (err: any) {
       console.error(err);
@@ -657,6 +614,28 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
           </form>
 
           <div className="flex flex-col gap-6 items-center">
+            <div className="flex items-center gap-4 w-full">
+              <div className="h-px bg-white/10 flex-1" />
+              <span className="text-[10px] uppercase tracking-widest font-black text-zinc-400">Ou use o método rápido</span>
+              <div className="h-px bg-white/10 flex-1" />
+            </div>
+
+            <div className="grid grid-cols-1 w-full gap-3">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 text-zinc-300 font-black py-4 px-8 rounded-2xl active:scale-[0.97] transition-all"
+              >
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-4 h-4 opacity-50"
+                  referrerPolicy="no-referrer"
+                />
+                <span className="text-xs">Google Account</span>
+              </button>
+            </div>
+
             <button
               onClick={() => { vibrate(5); setIsRegistering(!isRegistering); }}
               className="text-[10px] uppercase tracking-[0.25em] font-black text-zinc-400 hover:text-white transition-colors py-2"

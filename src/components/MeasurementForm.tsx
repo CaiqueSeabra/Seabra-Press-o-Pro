@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Period } from '../types';
-import { Sun, Sunset, Moon, Activity, Heart, HeartPulse, Camera, Image, Loader2 } from 'lucide-react';
+import { Sun, Sunset, Moon, Activity, Heart, HeartPulse, Camera, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractMeasurementFromImage } from '../lib/gemini';
 
@@ -17,7 +17,6 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
   const [isScanning, setIsScanning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // Automate period selection based on current time
   useEffect(() => {
@@ -52,7 +51,6 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
     } finally {
       setIsScanning(false);
       if (cameraInputRef.current) cameraInputRef.current.value = '';
-      if (galleryInputRef.current) galleryInputRef.current.value = '';
     }
   };
 
@@ -84,17 +82,10 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
         <div className="flex gap-3">
           <input 
             type="file" 
-            accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif" 
+            accept="image/*" 
             capture="environment"
             className="hidden" 
             ref={cameraInputRef}
-            onChange={handleImageUpload}
-          />
-          <input 
-            type="file" 
-            accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif" 
-            className="hidden" 
-            ref={galleryInputRef}
             onChange={handleImageUpload}
           />
           <button
@@ -109,15 +100,6 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
               <Camera className="w-4 h-4" />
             )}
             Câmera
-          </button>
-          <button
-            type="button"
-            onClick={() => galleryInputRef.current?.click()}
-            disabled={isScanning || loading}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50 border border-zinc-700"
-          >
-            <Image className="w-4 h-4" />
-            Galeria
           </button>
         </div>
       </div>

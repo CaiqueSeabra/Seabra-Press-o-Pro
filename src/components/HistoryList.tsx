@@ -156,24 +156,14 @@ export function HistoryList({ measurements, onDelete }: Props) {
                               <div className="flex items-center gap-1 bg-red-500/10 rounded-xl p-1 border border-red-500/20 animate-in fade-in zoom-in-95">
                                 <span className="text-[10px] text-red-500 font-black uppercase tracking-widest px-2">Excluir?</span>
                                 <button 
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setConfirmDeleteId(null);
-                                  }}
+                                  onClick={() => setConfirmDeleteId(null)}
                                   className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
                                 <button 
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (measurement.id) {
-                                      onDelete(measurement.id);
-                                    } else {
-                                      alert("Erro: ID da medição não encontrado.");
-                                    }
+                                  onClick={() => {
+                                    if (measurement.id) onDelete(measurement.id);
                                     setConfirmDeleteId(null);
                                   }}
                                   className="p-1.5 text-red-500 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
@@ -183,11 +173,7 @@ export function HistoryList({ measurements, onDelete }: Props) {
                               </div>
                             ) : (
                               <button 
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (measurement.id) setConfirmDeleteId(measurement.id);
-                                }}
+                                onClick={() => measurement.id && setConfirmDeleteId(measurement.id)}
                                 className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                                 title="Excluir medição"
                               >

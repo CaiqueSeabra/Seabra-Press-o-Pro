@@ -1,6 +1,6 @@
 {
-  "name": " Seabra Pressão Pro",
-  "description": "Controle Inteligente da Pressão Arterial.",
+  "name": "Seabra Pressão Pro",
+  "description": "Controle Inteligente da Pressão Arterial",
   "requestFramePermissions": [
     "camera"
   ],

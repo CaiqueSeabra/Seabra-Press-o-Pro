@@ -14,13 +14,13 @@
     "@google/genai": "^1.29.0",
     "@supabase/supabase-js": "^2.105.1",
     "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-legacy": "^6.0.0",
     "@vitejs/plugin-react": "^5.0.4",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
-    "heic2any": "^0.0.4",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.546.0",
@@ -30,6 +30,7 @@
     "react-dom": "^19.0.0",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
+    "terser": "^5.46.1",
     "vite": "^6.2.0"
   },
   "devDependencies": {
