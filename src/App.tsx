@@ -750,6 +750,13 @@ function AppContent() {
     // Desabilitado no modo Sketchware
   };
 
+  useEffect(() => {
+    // Se esta for uma janela popup (aberta para login do Google) e já logamos, feche-a
+    if (user && window.opener && window.opener !== window) {
+      window.close();
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-8">

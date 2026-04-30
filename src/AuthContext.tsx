@@ -22,20 +22,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session && window.opener && window.opener !== window) {
+        window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS', session }, '*');
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session && window.opener && window.opener !== window) {
+        window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS', session }, '*');
+      }
     });
 
-    return () => subscription.unsubscribe();
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'SUPABASE_AUTH_SUCCESS' && event.data.session) {
+        const { session } = event.data;
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        });
+        setUser(session.user);
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
   const signInWithGoogle = async () => {
     try {
       // Abre a aba/janela imediatamente para bypassar o bloqueio de popups (especialmente iOS/Safari)
-      const authWindow = window.open('', '_blank', 'width=500,height=600,noopener,noreferrer');
+      const authWindow = window.open('', '_blank', 'width=500,height=600');
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
