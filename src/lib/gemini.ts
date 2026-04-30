@@ -1,4 +1,5 @@
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import heic2any from 'heic2any';
 
 // Initialize the Gemini API client lazily to ensure environment variables are loaded
 let aiClient: GoogleGenAI | null = null;
@@ -23,6 +24,23 @@ function getAiClient() {
 export async function extractMeasurementFromImage(file: File) {
   try {
     const ai = getAiClient();
+    
+    let processableFile = file;
+    // Check if the file is HEIC or HEIF
+    if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+      try {
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.8
+        });
+        processableFile = new File([Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob], 'converted.jpeg', { type: 'image/jpeg' });
+      } catch (conversionError) {
+        console.error("Failed to convert HEIC image:", conversionError);
+        throw new Error('Falha ao processar imagem HEIC. Tente usar uma foto JPG/PNG.');
+      }
+    }
+
     // Resize image before sending to reduce payload size and avoid errors
     const base64Data = await new Promise<string>((resolve, reject) => {
       const img = new Image();
@@ -67,11 +85,11 @@ export async function extractMeasurementFromImage(file: File) {
       img.onerror = () => reject(new Error('Failed to load image'));
       reader.onerror = () => reject(new Error('Failed to read file'));
       
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(processableFile);
     });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest', // Recommended latest flash model
+      model: 'gemini-3-flash-preview',
       contents: [
         {
           role: 'user',

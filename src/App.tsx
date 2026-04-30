@@ -392,7 +392,7 @@ function Dashboard({ isInstallable, onInstall, isWebView }: { isInstallable: boo
 }
 
 function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: () => void, isInstallable: boolean, onInstall: () => void, isWebView: boolean }) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
@@ -458,29 +458,6 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
       }
       
       setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    vibrate(10);
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithGoogle();
-      // Mostramos uma mensagem amigável caso o usuário não perceba que uma nova aba abriu
-      setError('A tela do Google foi aberta em uma nova janela. Faça o login lá!');
-      
-      // Remove a mensagem depois de 10 segundos
-      setTimeout(() => setError(''), 10000);
-    } catch (err: any) {
-      console.error("Google Auth Error:", err);
-      let errorMsg = err.message || 'Falha na conexão.';
-      if (errorMsg.includes('popup')) {
-        errorMsg = 'O bloqueador de popups do seu navegador impediu a tela do Google. Por favor, permita popups neste site.';
-      }
-      setError(`Erro Google: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -629,28 +606,6 @@ function LoginScreen({ onBack, isInstallable, onInstall, isWebView }: { onBack: 
           </form>
 
           <div className="flex flex-col gap-6 items-center">
-            <div className="flex items-center gap-4 w-full">
-              <div className="h-px bg-white/10 flex-1" />
-              <span className="text-[10px] uppercase tracking-widest font-black text-zinc-400">Ou use o método rápido</span>
-              <div className="h-px bg-white/10 flex-1" />
-            </div>
-
-            <div className="grid grid-cols-1 w-full gap-3">
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 text-zinc-300 font-black py-4 px-8 rounded-2xl active:scale-[0.97] transition-all"
-              >
-                <img 
-                  src="https://www.google.com/favicon.ico" 
-                  alt="Google" 
-                  className="w-4 h-4 opacity-50"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="text-xs">Google Account</span>
-              </button>
-            </div>
-
             <button
               onClick={() => { vibrate(5); setIsRegistering(!isRegistering); }}
               className="text-[10px] uppercase tracking-[0.25em] font-black text-zinc-400 hover:text-white transition-colors py-2"
@@ -749,13 +704,6 @@ function AppContent() {
   const handleManualInstall = () => {
     // Desabilitado no modo Sketchware
   };
-
-  useEffect(() => {
-    // Se esta for uma janela popup (aberta para login do Google) e já logamos, feche-a
-    if (user && window.opener && window.opener !== window) {
-      window.close();
-    }
-  }, [user]);
 
   if (loading) {
     return (

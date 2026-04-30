@@ -84,7 +84,7 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
         <div className="flex gap-3">
           <input 
             type="file" 
-            accept="image/*" 
+            accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif" 
             capture="environment"
             className="hidden" 
             ref={cameraInputRef}
@@ -92,7 +92,7 @@ export function MeasurementForm({ onSubmit, loading }: Props) {
           />
           <input 
             type="file" 
-            accept="image/*" 
+            accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif" 
             className="hidden" 
             ref={galleryInputRef}
             onChange={handleImageUpload}
